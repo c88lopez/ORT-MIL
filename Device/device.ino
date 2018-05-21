@@ -26,7 +26,7 @@ const char* SSID = "Telecentro-3380";
 const char* PASSWORD = "tele-3189996";
 
 // IP del servidor al cual se realizan los request con los datos sensados.
-const char* rpiHost = "192.168.0.19";  
+const char* rpiHost = "192.168.0.12";  
 
 // Servicio del cual se obtendrá la ubicación del dispositivo
 const char* IpApiHost = "ip-api.com";   
@@ -407,5 +407,5 @@ void loop() {
   
   tcpCleanup();    // Cleanup de las conexiones TCP al sistema remoto para evitar el memory leak
 
-  delay(1000);  
+  delay(500);  
 }
