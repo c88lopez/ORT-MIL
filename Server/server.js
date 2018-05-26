@@ -32,10 +32,12 @@ var gyroX;
 var gyroY;
 var gyroZ;
 var location;
+var macAddress;
 
 server.listen(3000, process.argv[2], function() {
 	var host = server.address().address
-	var port = server.address().port
+    var port = server.address().port
+    
 	console.log("Server listening on %s:%s...", host, port);
 });
 
@@ -64,6 +66,8 @@ app.post('/accel', function(req, res) {
 
   io.emit('accelData', accelData);
 
+  console.log(req.body.data);
+
   accelX = req.body.data.accel.accelX
   accelY = req.body.data.accel.accelY
   accelZ = req.body.data.accel.accelZ
@@ -72,7 +76,9 @@ app.post('/accel', function(req, res) {
   gyroY = req.body.data.gyro.gyroY
   gyroZ = req.body.data.gyro.gyroZ
     
-  fs.appendFileSync("./data.csv", `${accelX},${accelY},${accelZ},${gyroX},${gyroY},${gyroZ}\n`)
+  macAddress = req.body.data.macAddress.split(':').join('_');
+
+  fs.appendFileSync(`./${macAddress}.csv`, `${accelX},${accelY},${accelZ},${gyroX},${gyroY},${gyroZ}\n`)
 
   //io.emit('accelX', accelX);
   //io.emit('accelY', accelY);

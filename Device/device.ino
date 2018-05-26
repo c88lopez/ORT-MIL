@@ -38,6 +38,7 @@ StaticJsonBuffer<300> jsonBuffer;
 JsonObject& object = jsonBuffer.createObject();
 JsonObject& data = object.createNestedObject("data");
   
+JsonObject& macAddress = data.createNestedObject("macAddress");
 JsonObject& accel = data.createNestedObject("accel");
 JsonObject& temp = data.createNestedObject("temp");
 JsonObject& gyro = data.createNestedObject("gyro");
@@ -199,30 +200,22 @@ void readRawMPU() {
   Wire.endTransmission(false);            // termina transmissão mas continua com I2C aberto (envia STOP e START)
   Wire.requestFrom(MPU_ADDR, 14);         // configura para receber 14 bytes começando do registro escolhido acima (0x3B)
 
-  AcX = Wire.read() << 8;                 // lê primeiro o byte mais significativo
-  AcX |= Wire.read();                     // depois lê o bit menos significativo
-  AcY = Wire.read() << 8;
-  AcY |= Wire.read();
-  AcZ = Wire.read() << 8;
-  AcZ |= Wire.read();
+  GyX = Wire.read() << 8;                 // Leemos primero el byte más significativo
+  GyX |= Wire.read();                     // y luego el menos significativo
+  GyY = Wire.read() << 8;
+  GyY |= Wire.read();
+  GyZ = Wire.read() << 8;
+  GyZ |= Wire.read();
 
   Tmp = Wire.read() << 8;
   Tmp |= Wire.read();
 
-  GyX = Wire.read() << 8;
-  GyX |= Wire.read();
-  GyY = Wire.read() << 8;
-  GyY |= Wire.read();
-  GyZ = Wire.read() << 8;
-  GyZ |= Wire.read(); 
-
-  Serial.print("AcX = "); Serial.print(AcX);
-  Serial.print(" | AcY = "); Serial.print(AcY);
-  Serial.print(" | AcZ = "); Serial.print(AcZ);
-  Serial.print(" | Tmp = "); Serial.print(Tmp/340.00+36.53);
-  Serial.print(" | GyX = "); Serial.print(GyX);
-  Serial.print(" | GyY = "); Serial.print(GyY);
-  Serial.print(" | GyZ = "); Serial.println(GyZ);
+  AcX = Wire.read() << 8;
+  AcX |= Wire.read();
+  AcY = Wire.read() << 8;
+  AcY |= Wire.read();
+  AcZ = Wire.read() << 8;
+  AcZ |= Wire.read(); 
 
   led_state = !led_state;
   digitalWrite(LED_BUILTIN, led_state); // Parpadea el LED en cada transmisión
@@ -271,8 +264,6 @@ void initWiFi() {
  * Funcion que guarda los datos en el JSON.
  */
 void populateJSON() {
-  object["nodeID"] = "mcu1";
-
   accel["accelX"] = AcX;
   accel["accelY"] = AcY;
   accel["accelZ"] = AcZ;
@@ -282,6 +273,10 @@ void populateJSON() {
   gyro["gyroX"] = GyX;
   gyro["gyroY"] = GyY;
   gyro["gyroZ"] = GyZ;
+
+  data["macAddress"] = WiFi.macAddress();
+
+  object.printTo(Serial);
 }
 
 /*
