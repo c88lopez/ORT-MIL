@@ -34,22 +34,28 @@ const char* IpApiHost = "ip-api.com";
 WiFiClient client;
 
 // Construimos el objeto JSON que luego se le agregarán los datos sensados.
-StaticJsonBuffer<300> jsonBuffer;
+StaticJsonBuffer<400> jsonBuffer;
 JsonObject& object = jsonBuffer.createObject();
-JsonObject& data = object.createNestedObject("data");
-  
-JsonObject& macAddress = data.createNestedObject("macAddress");
-JsonObject& accel = data.createNestedObject("accel");
-JsonObject& temp = data.createNestedObject("temp");
-JsonObject& gyro = data.createNestedObject("gyro");
-  
-JsonObject& accelX = accel.createNestedObject("accelX");
-JsonObject& accelY = accel.createNestedObject("accelY");
-JsonObject& accelZ = accel.createNestedObject("accelZ");
 
-JsonObject& gyroX = gyro.createNestedObject("gyroX");
-JsonObject& gyroY = gyro.createNestedObject("gyroY");
-JsonObject& gyroZ = gyro.createNestedObject("gyroZ");
+JsonObject& data = object.createNestedObject("data");
+
+JsonObject& macAddress = data.createNestedObject("macAddress");
+
+JsonObject& battery = data.createNestedObject("battery");
+
+JsonObject& position = data.createNestedObject("position");
+JsonObject& lat = position.createNestedObject("lat");
+JsonObject& lon = position.createNestedObject("lon");
+
+JsonObject& accel = data.createNestedObject("accel");  
+JsonObject& accelX = accel.createNestedObject("x");
+JsonObject& accelY = accel.createNestedObject("y");
+JsonObject& accelZ = accel.createNestedObject("z");
+
+JsonObject& gyro = data.createNestedObject("gyro");
+JsonObject& gyroX = gyro.createNestedObject("x");
+JsonObject& gyroY = gyro.createNestedObject("y");
+JsonObject& gyroZ = gyro.createNestedObject("z");
 
 /*
  * initI2C
@@ -196,7 +202,7 @@ void setAccelScale() {
  */
 void readRawMPU() {  
   Wire.beginTransmission(MPU_ADDR);       // inicia comunicação com endereço do MPU6050
-  Wire.write(ACCEL_XOUT);                       // envia o registro com o qual se deseja trabalhar, começando com registro 0x3B (ACCEL_XOUT_H)
+  Wire.write(ACCEL_XOUT);                 // envia o registro com o qual se deseja trabalhar, começando com registro 0x3B (ACCEL_XOUT_H)
   Wire.endTransmission(false);            // termina transmissão mas continua com I2C aberto (envia STOP e START)
   Wire.requestFrom(MPU_ADDR, 14);         // configura para receber 14 bytes começando do registro escolhido acima (0x3B)
 
@@ -264,17 +270,20 @@ void initWiFi() {
  * Funcion que guarda los datos en el JSON.
  */
 void populateJSON() {
-  accel["accelX"] = AcX;
-  accel["accelY"] = AcY;
-  accel["accelZ"] = AcZ;
-
-  data["temp"] = Tmp/340.00+36.53;
-
-  gyro["gyroX"] = GyX;
-  gyro["gyroY"] = GyY;
-  gyro["gyroZ"] = GyZ;
-
   data["macAddress"] = WiFi.macAddress();
+
+  data["battery"] = "83.45";
+
+  position["lat"] = "-34.456278";
+  position["lon"] = "65.236794";
+
+  accel["x"] = AcX;
+  accel["y"] = AcY;
+  accel["z"] = AcZ;
+
+  gyro["x"] = GyX;
+  gyro["y"] = GyY;
+  gyro["z"] = GyZ;
 
   object.printTo(Serial);
 }

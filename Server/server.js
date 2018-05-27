@@ -51,42 +51,21 @@ app.post('/location', function(req, res) {
 	console.log(req.body.city)
 });
 
-
 app.post('/accel', function(req, res) {
-  //console.log(req.body.nodeID)
-  //console.log(req.body.data.accel.accelX)
-  //console.log(req.body.data.accel.accelY)
-  //console.log(req.body.data.accel.accelZ)
-  //console.log(req.body.data.temp)
-  //console.log(req.body.data.gyro.gyroX)
-  //console.log(req.body.data.gyro.gyroY)
-  //console.log(req.body.data.gyro.gyroZ)
-
   accelData = req.body
 
   io.emit('accelData', accelData);
 
-  console.log(req.body.data);
-
-  accelX = req.body.data.accel.accelX
-  accelY = req.body.data.accel.accelY
-  accelZ = req.body.data.accel.accelZ
-  temp = req.body.data.temp
-  gyroX = req.body.data.gyro.gyroX
-  gyroY = req.body.data.gyro.gyroY
-  gyroZ = req.body.data.gyro.gyroZ
+  accelX = req.body.data.accel.x
+  accelY = req.body.data.accel.y
+  accelZ = req.body.data.accel.z
+  gyroX = req.body.data.gyro.x
+  gyroY = req.body.data.gyro.y
+  gyroZ = req.body.data.gyro.z
     
   macAddress = req.body.data.macAddress.split(':').join('_');
 
   fs.appendFileSync(`./${macAddress}.csv`, `${accelX},${accelY},${accelZ},${gyroX},${gyroY},${gyroZ}\n`)
-
-  //io.emit('accelX', accelX);
-  //io.emit('accelY', accelY);
-  //io.emit('accelZ', accelZ);
-  //io.emit('temp', temp);
-  //io.emit('gyroX', gyroX);
-  //io.emit('gyroY', gyroY);
-  //io.emit('gyroZ', gyroZ);
 });
 
 io.on('connection', function (socket) {
