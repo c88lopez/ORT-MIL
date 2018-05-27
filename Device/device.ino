@@ -411,5 +411,5 @@ void loop() {
   
   tcpCleanup();    // Cleanup de las conexiones TCP al sistema remoto para evitar el memory leak
 
-  delay(500);  
+  delay(1000);  
 }
