@@ -58,6 +58,12 @@
 			deviceRow.children(".accelY").text(data.accel.y);
 			deviceRow.children(".accelZ").text(data.accel.z);
 			deviceRow.children(".battery").text(data.battery + '%');
+
+			if (data.isMoving) {
+				deviceRow.children(".in-movement").removeClass('bg-danger').addClass('bg-success');
+			} else {
+				deviceRow.children(".in-movement").removeClass('bg-success').addClass('bg-danger');
+			}
 		}
 
 		function newRow(macAddress) {
@@ -70,7 +76,7 @@
 					+ '<td class=\"accel\X"></td>'
 					+ '<td class=\"accel\Y"></td>'
 					+ '<td class=\"accel\Z"></td>'
-					+ '<td class=\"in-movement\">x</td>'
+					+ '<td class=\"in-movement\"></td>'
 					+ '<td class=\"battery\">83%</td>'
 				+ '</tr\>';
 
