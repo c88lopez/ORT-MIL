@@ -286,6 +286,7 @@ void populateJSON() {
   gyro["z"] = GyZ;
 
   object.printTo(Serial);
+  Serial.println();
 }
 
 /*
@@ -411,5 +412,5 @@ void loop() {
   
   tcpCleanup();    // Cleanup de las conexiones TCP al sistema remoto para evitar el memory leak
 
-  delay(1000);  
+  delay(500);  
 }
