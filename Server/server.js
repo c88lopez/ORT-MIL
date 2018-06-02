@@ -43,7 +43,6 @@ app.post('/location', function(req, res) {
 });
 
 app.post('/accel', function(req, res) {
-    const currentTime = Date.now();
     const macAddress = req.body.data.macAddress;
 
     const data = {
@@ -58,6 +57,8 @@ app.post('/accel', function(req, res) {
             z: req.body.data.gyro.z,
         },
     }
+
+    req.body.data.currentTime = Date.now();
 
     if (devices.hasOwnProperty(macAddress)) {
         devices[macAddress].unshift(data);

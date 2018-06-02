@@ -51,7 +51,13 @@
 		});
 
 		function updateRow(deviceRow, data) {
-			deviceRow.children(".last-comunication").text('2018-06-02 03:05:48');
+			lastComunication = new Date(data.currentTime);
+
+			deviceRow.children(".last-comunication").text(
+				`${('0'+lastComunication.getDate()).substr(-2)}-${('0'+lastComunication.getMonth()).substr(-2)}-${lastComunication.getFullYear()}`
+				+ ` ${lastComunication.getHours()}:${lastComunication.getMinutes()}:${lastComunication.getSeconds()}`
+			);
+
 			deviceRow.children(".SSID").text(data.SSID);
 			deviceRow.children(".RSSI").text(data.RSSI);
 			deviceRow.children(".lat").text(data.position.latitude);
