@@ -1,6 +1,7 @@
 #include <ESP8266WiFi.h>  // Biblioteca para las funciones WiFi
 #include <Wire.h>         // Biblioteca de comunicación I2C
 #include <ArduinoJson.h>  // Biblioteca para el manejo JSON
+#include <ESP8266HTTPClient.h>
 
 /**
  * Definiciones de algunas direcciones mas comunes del MPU6050.
@@ -21,15 +22,26 @@ bool led_state = false;
 // Variables de los datos sensados.
 int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ; 
 
+//Variables de Google Geolocation API call
+
+int status = WL_IDLE_STATUS;
+String jsonString = "{\n";
+double latitude    = 0.0;
+double longitude   = 0.0;
+double accuracy    = 0.0;
+int more_text = 0; // Setear en 1 para obtener información de DEBUG de GETGoogleGeolocation()
+
+//Credenciales para Google GeoLocation API... IMPORTANTE: Versión gratiuta admite 2500 consultas x día.
+const char* Host = "www.googleapis.com";
+String thisPage = "/geolocation/v1/geolocate?key=";
+String key = "AIzaSyDjqF5jLsWhLChhiKtHN3tsDpGQo8f1pUo";
+
 // Definición de la red Wifi.
 const char* SSID = "Telecentro-3380";
 const char* PASSWORD = "tele-3189996";
 
 // IP del servidor al cual se realizan los request con los datos sensados.
-const char* rpiHost = "192.168.0.12";  
-
-// Servicio del cual se obtendrá la ubicación del dispositivo
-const char* IpApiHost = "ip-api.com";   
+const char* rpiHost = "192.168.0.12";
 
 WiFiClient client;
 
@@ -46,6 +58,7 @@ JsonObject& battery = data.createNestedObject("battery");
 JsonObject& position = data.createNestedObject("position");
 JsonObject& lat = position.createNestedObject("lat");
 JsonObject& lon = position.createNestedObject("lon");
+//JsonObject& accuracy = position.createNestedObject("accuracy");
 
 JsonObject& accel = data.createNestedObject("accel");  
 JsonObject& accelX = accel.createNestedObject("x");
@@ -274,8 +287,9 @@ void populateJSON() {
 
   data["battery"] = "83.45";
 
-  position["lat"] = "-34.456278";
-  position["lon"] = "65.236794";
+  position["lat"] = latitude;
+  position["lon"] = longitude;
+  position["accuracy"] = accuracy;
 
   accel["x"] = AcX;
   accel["y"] = AcY;
@@ -313,68 +327,117 @@ void makePOST() {
  * makeGETlocation
  * Obtiene la ubicación segun la conexión WiFi y el servicio.
  */
-String makeGETlocation() {
-  if (!client.connect(IpApiHost, 80) ) {
-    Serial.println("Falló la conexión con `ip-api.com`");
-    return "connection failed";
-  }
+void GETGoogleGeolocation() {
   
-  // Realiza HTTP GET request
-  client.println("GET /json/?fields=8405 HTTP/1.1");
-  client.print("Host: ");
-  client.println(IpApiHost);
-  client.println("Connection: close");
-  client.println();
+  char bssid[6];
+  DynamicJsonBuffer jsonBuffer; 
+  Serial.println("Iniciando Scan");
+  // WiFi.scanNetworks devolverá la cantidad de redes encontradas
+    int n = WiFi.scanNetworks();
+    Serial.println("Scan completado");
+      if (n == 0)
+        Serial.println("No se encontraron redes");
+      else
+      {
+        Serial.print(n);
+        Serial.println(" Redes encontradas...");
 
-  // Recibe el header de la respuesta.
-  while (client.connected()) {
-    if (client.readStringUntil('\n') == "\r") {
-      break;
-    }
-  }
+          if(more_text){
+            // Imprime el JSON formateado.
+            Serial.println("{");
+            Serial.println("\"homeMobileCountryCode\": 722,");  // Este es el MCC (Movile Country Code) asignado a Argentina. Fuente: http://www.3glteinfo.com/mobile-country-code-mcc-and-mobile-network-code-mnc/
+            Serial.println("\"homeMobileNetworkCode\": 1,");   // Este es el MNC (Movile Network Code) asignado a Argentina.
+            Serial.println("\"radioType\": \"gsm\",");        // Para GSM. Valores admitidos: lte, gsm, cdma y wcdma.
+            Serial.println("\"carrier\": \"Movistar\",");    // Asociación al carrier Movistar. 
+            //Serial.println("\"cellTowers\": [");           // No se reporta ninguna torre de celular.      
+            //Serial.println("],");      
+            Serial.println("\"wifiAccessPoints\": [");
+                for (int i = 0; i < n; ++i) {
+                  Serial.println("{");
+                  Serial.print("\"macAddress\" : \"");    
+                  Serial.print(WiFi.BSSIDstr(i));
+                  Serial.println("\",");
+                  Serial.print("\"signalStrength\": ");     
+                  Serial.println(WiFi.RSSI(i));
+                if(i<n-1){
+                  Serial.println("},");
+                }else{
+                  Serial.println("}");  
+                } 
+                }
+                  Serial.println("]");
+                  Serial.println("}");   
+                }
+                  Serial.println(" ");
+                }    
+          // En este punto se construye el JSONString para hacer el API call a Google Geolocation API.
+          jsonString="{\n";
+          jsonString +="\"homeMobileCountryCode\": 722,\n";
+          jsonString +="\"homeMobileNetworkCode\": 1,\n";
+          jsonString +="\"radioType\": \"gsm\",\n";
+          jsonString +="\"carrier\": \"Movistar\",\n";
+          jsonString +="\"wifiAccessPoints\": [\n";
+              for (int j = 0; j < n; ++j)
+              {
+                jsonString +="{\n";
+                jsonString +="\"macAddress\" : \"";    
+                jsonString +=(WiFi.BSSIDstr(j));      // Campo Obligatorio -  La dirección MAC del nodo WiFi. Los separadores deben ser : (dos puntos).
+                jsonString +="\",\n";                  
+                jsonString +="\"signalStrength\": ";   
+                jsonString +=WiFi.RSSI(j);          // La potencia actual de la señal medida en dBm.
+                jsonString +="\n";
+                if(j<n-1){
+                  jsonString +="},\n";
+                }else{
+                  jsonString +="}\n";  
+                }
+              }
+          
+          jsonString +=("]\n");
+          jsonString +=("}\n");
 
-  String data = client.readStringUntil('\n');
-  Serial.print("Datos geolocalización: ");
-  Serial.println(data);
-
-  return data; 
-}
-
-/*
- * makePOSTlocation
- * Se encarga de obtener la ubicación del dispositivo y enviarla al servidor.
- */
-void makePOSTlocation() {
-  String location = makeGETlocation();
-  if (!client.connect(rpiHost, 3000)) {  // Nos conectamos con el servidor
-    Serial.print("Could not connect to host: \n");
-    Serial.print(rpiHost);
-  } else {
-    // Realiza HTTP POST request.
-    client.println("POST /location HTTP/1.1");
-    client.println("Host: 192.168.1.198");
-    client.println("Content-Type: application/json");
-    client.print("Content-Length: ");
-    client.println(location.length());
-    client.println();
-    client.println(location);    // Enviamos el JSON al servidor.
-  }
-}
-
-/*
-
-// no need for #include
-struct tcp_pcb;
-extern struct tcp_pcb* tcp_tw_pcbs;
-extern "C" void tcp_abort (struct tcp_pcb* pcb);
-
-void tcpCleanup (void) {
-  while (tcp_tw_pcbs)
-    tcp_abort(tcp_tw_pcbs);
-}
-
-*/
-
+          WiFiClientSecure client;
+          
+          //Connect to the client and make the api call
+          Serial.print("Requesting URL: ");
+          Serial.println("https://" + (String)Host + thisPage + key);
+          Serial.println(" ");
+            if (client.connect(Host, 443)) {
+              Serial.println("Connected");    
+              client.println("POST " + thisPage + key + " HTTP/1.1");    
+              client.println("Host: "+ (String)Host);
+              client.println("Connection: close");
+              client.println("Content-Type: application/json");
+              client.println("User-Agent: Arduino/1.0");
+              client.print("Content-Length: ");
+              client.println(jsonString.length());    
+              client.println();
+              client.print(jsonString);  
+              delay(500);
+            }
+          
+          //Leer y parsear el JSON de respuesta de Google Geolocation API 
+            while (client.available()) {
+                String line = client.readStringUntil('\r');
+                if(more_text){
+                  Serial.print(line);
+                }
+                JsonObject& root = jsonBuffer.parseObject(line);
+                if(root.success()){
+                  latitude    = root["location"]["lat"];
+                  longitude   = root["location"]["lng"];
+                  accuracy    = root["accuracy"];
+                  }
+                }
+              Serial.print("Latitud = ");
+              Serial.println(latitude,6);
+              Serial.print("Longitud = ");
+              Serial.println(longitude,6);
+              Serial.println("Accuracy = ");
+              Serial.println(accuracy,2);
+            }
+            
+//Para implementar el TCP cleanup
 struct tcp_pcb;
 extern struct tcp_pcb* tcp_tw_pcbs;
 extern "C" void tcp_abort (struct tcp_pcb* pcb);
@@ -398,19 +461,18 @@ void setup() {
   initMPU();
   checkMPU(MPU_ADDR);
 
-  Serial.println("\nEnviando geolocalizacion al servidor\n");
-//  makePOSTlocation();
-
   Serial.println("\nConfiguración finalizada iniciando loop\n");
 }
 
 // Run on every iteration
 void loop() {
   readRawMPU();    // Lee los datos del acelerómetro
+  GETGoogleGeolocation(); //API call a Google Location API para obtener coordenas de geolocalizacion del dispositivo
+
   populateJSON();  // Crea el objeto JSON con los datos del acelerómetro
   makePOST();      // Hace el POST en el NodeJS server
   
   tcpCleanup();    // Cleanup de las conexiones TCP al sistema remoto para evitar el memory leak
 
-  delay(500);  
+  delay(15000);  
 }
