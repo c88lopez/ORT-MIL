@@ -13,12 +13,12 @@
 						<tr>
 							<th>#</th>
 							<th>Mac Address</th>
-							<th>Giroscopio eje X</th>
-							<th>Giroscopio eje Y</th>
-							<th>Giroscopio eje Z</th>
-							<th>Aceleración eje X</th>
-							<th>Aceleración eje Y</th>
-							<th>Aceleración eje Z</th>
+							<th>Ult. comunicación</th>
+							<th>SSID</th>
+							<th>RSSI</th>
+							<th>Latitud</th>
+							<th>Longitud</th>
+							<th>Precisión</th>
 							<th>En movimiento</th>
 							<th>Estado Batería</th>
 						</tr>
@@ -51,31 +51,32 @@
 		});
 
 		function updateRow(deviceRow, data) {
-			deviceRow.children(".gyroX").text(data.gyro.x);
-			deviceRow.children(".gyroY").text(data.gyro.y);
-			deviceRow.children(".gyroZ").text(data.gyro.z);
-			deviceRow.children(".accelX").text(data.accel.x);
-			deviceRow.children(".accelY").text(data.accel.y);
-			deviceRow.children(".accelZ").text(data.accel.z);
-			deviceRow.children(".battery").text(data.battery + '%');
+			deviceRow.children(".last-comunication").text('2018-06-02 03:05:48');
+			deviceRow.children(".SSID").text(data.SSID);
+			deviceRow.children(".RSSI").text(data.RSSI);
+			deviceRow.children(".lat").text(data.position.latitude);
+			deviceRow.children(".lon").text(data.position.longitude);
+			deviceRow.children(".accuracy").text(data.position.accuracy);
 
 			if (data.isMoving) {
 				deviceRow.children(".in-movement").removeClass('bg-danger').addClass('bg-success');
 			} else {
 				deviceRow.children(".in-movement").removeClass('bg-success').addClass('bg-danger');
 			}
+
+			deviceRow.children(".battery").text(data.battery + '%');
 		}
 
 		function newRow(macAddress) {
 			var newRow = '<tr id=' + macAddress + '>'
 					+ '<td>1</td>'
 					+ '<td>' + macAddress.split('_').join(':') + '</td>'
-					+ '<td class=\"gyroX\"></td>'
-					+ '<td class=\"gyroY\"></td>'
-					+ '<td class=\"gyroZ\"></td>'
-					+ '<td class=\"accel\X"></td>'
-					+ '<td class=\"accel\Y"></td>'
-					+ '<td class=\"accel\Z"></td>'
+					+ '<td class=\"last-comunication\"></td>'
+					+ '<td class=\"SSID\"></td>'
+					+ '<td class=\"RSSI\"></td>'
+					+ '<td class=\"lat\"></td>'
+					+ '<td class=\"lon\"></td>'
+					+ '<td class=\"accuracy\"></td>'
 					+ '<td class=\"in-movement\"></td>'
 					+ '<td class=\"battery\">83%</td>'
 				+ '</tr\>';
