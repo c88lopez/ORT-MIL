@@ -27,9 +27,9 @@ String currentSSID       = WiFi.SSID();
 
 int status = WL_IDLE_STATUS;
 String jsonString = "{\n";
-double latitude    = 0.0;
-double longitude   = 0.0;
-double accuracy    = 0.0;
+double latitude   = 0.0;
+double longitude  = 0.0;
+double accuracy   = 0.0;
 
 WiFiClient client;
 
@@ -40,8 +40,8 @@ JsonObject& object = jsonBuffer.createObject();
 JsonObject& data = object.createNestedObject("data");
 
 JsonObject& position = data.createNestedObject("position");
-JsonObject& accel = data.createNestedObject("accel");
-JsonObject& gyro = data.createNestedObject("gyro");
+JsonObject& accel    = data.createNestedObject("accel");
+JsonObject& gyro     = data.createNestedObject("gyro");
 
 const int loopFreq = 1000;
 int loopCount = 0;
