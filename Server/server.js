@@ -90,31 +90,19 @@ function isInWorkInterval(macAddress) {
 
     if (config.dispositivos[macAddress].cronograma.hasOwnProperty(weekday[currentTimeObject.getDay()])) {
         config.dispositivos[macAddress].cronograma[weekday[currentTimeObject.getDay()]].forEach((horas) => {
-            const currentHour = addZeroPadding(currentTimeObject.getHours());
-            const currentMinute = addZeroPadding(currentTimeObject.getMinutes());
+            const currentTime = [
+                addZeroPadding(currentTimeObject.getHours()), 
+                addZeroPadding(currentTimeObject.getMinutes())
+            ].join('');
 
-            const configuredStartHour = addZeroPadding(horas.inicio.split(':')[0]);
-            const configuredStartMinute = addZeroPadding(horas.inicio.split(':')[1]);
+            const configuredStart = horas.inicio.split(':').join('');
+            const configuredEnd = horas.fin.split(':').join('');
 
-            const configuredEndHour = addZeroPadding(horas.fin.split(':')[0]);
-            const configuredEndMinute = addZeroPadding(horas.fin.split(':')[1]);
-
-console.log('macAddress', macAddress);
-console.log('currentHour', currentHour);
-console.log('currentMinute', currentMinute);
-console.log('configuredStartHour', configuredStartHour);
-console.log('configuredStartMinute', configuredStartMinute);
-console.log('configuredEndHour', configuredEndHour);
-console.log('configuredEndMinute', configuredEndMinute);
-
-            if (
-                configuredStartHour <= currentHour && configuredStartMinute <= currentMinute
-                && configuredEndHour >= currentHour && configuredEndMinute >= currentMinute
-            ) {
+            if (configuredStart <= currentTime && currentTime <= configuredEnd) {
                 valido = true;
                 return;
             }
-        })
+        });
     }
 
     return valido;
