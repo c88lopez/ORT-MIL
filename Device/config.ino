@@ -4,8 +4,8 @@
  */
 
 // Definición de la red Wifi.
-const char* SSID = "youSSID";
-const char* PASSWORD = "SSIDPassword";
+const char* SSID = "Telecentro-3380";
+const char* PASSWORD = "tele-3189996";
 
 // IP del servidor al cual se realizan los request con los datos sensados.
 const char* rpiHost = "192.168.0.12";
@@ -14,7 +14,7 @@ const char* rpiHost = "192.168.0.12";
 // IMPORTANTE: Versión gratiuta admite 2500 consultas x día.
 const char* Host = "www.googleapis.com";
 String thisPage = "/geolocation/v1/geolocate?key=";
-String key = "google key";
+String key = "AIzaSyDjqF5jLsWhLChhiKtHN3tsDpGQo8f1pUo";
 
 /**
  * Este valor indica cada cuantos milisegundos se quiere pedir por la ubicación
