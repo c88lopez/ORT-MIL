@@ -62,7 +62,7 @@ void writeRegMPU(int reg, int val) {
     Wire.beginTransmission(MPU_ADDR);     // Iniciamos la comunicación con MPU6050
     Wire.write(reg);                      // Enviamos el registro con el que se trabajará
     Wire.write(val);                      // Escribimos el valor en el registro
-    Wire.endTransmission(true);           
+    Wire.endTransmission(true);
 }
 
 /*
@@ -77,7 +77,7 @@ uint8_t readRegMPU(uint8_t reg) {
     Wire.endTransmission(false);          // Termina con la transmición pero deja abierto el I2C.
     Wire.requestFrom(MPU_ADDR, 1);        // Configura para recibir 1 byte del registro elegido arriba
                       
-    return Wire.read();                   // Leemos y retormamos el byte 
+    return Wire.read();                   // Leemos y retormamos el byte
 }
 
 /**
@@ -102,9 +102,9 @@ void findMPU(int mpu_addr) {
  */
 void checkMPU(int mpu_addr) {
     findMPU(MPU_ADDR);
-      
+
     int data = readRegMPU(WHO_AM_I);
-    
+
     if (data == 104) {
         Serial.println("Acelerómetro MPU6050 respondió OK! (104)");
 
@@ -215,7 +215,7 @@ void readRawMPU() {
     led_state = !led_state;
     digitalWrite(LED_BUILTIN, led_state); // Parpadea el LED en cada transmisión
 
-    delay(50);                                        
+    delay(50);
 }
 
 /*
@@ -249,7 +249,7 @@ void reconnectWiFi() {
  */
 void initWiFi() {
     delay(10);
-    
+
     Serial.print("Conectando a la red: ");
     Serial.println(SSID);
     Serial.println("Aguarde");
@@ -263,7 +263,7 @@ void initWiFi() {
  */
 void populateJSON() {
     data["macAddress"] = currentMacAddress;
-    
+
     data["SSID"] = currentSSID;
     data["RSSI"] = WiFi.RSSI();
 
@@ -370,7 +370,7 @@ void getGoogleGeolocation() {
         }
     }
 }
-            
+
 //Para implementar el TCP cleanup
 struct tcp_pcb;
 extern struct tcp_pcb* tcp_tw_pcbs;
@@ -414,8 +414,10 @@ void loop() {
 
     populateJSON();  // Crea el objeto JSON con los datos del acelerómetro
     makePOST();      // Hace el POST en el NodeJS server
-    
-    tcpCleanup();    // Cleanup de las conexiones TCP al sistema remoto para evitar el memory leak
+
+    if ((30000 / loopFreq)) < loopCount ) {
+        tcpCleanup();    // Cleanup de las conexiones TCP al sistema remoto para evitar el memory leak
+    }
 
     loopCount++;
     delay(loopFreq);
