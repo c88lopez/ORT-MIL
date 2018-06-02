@@ -1,0 +1,27 @@
+{
+    "datosPorDispositivo": 2,
+    "dispositivos": {
+        "60:01:94:1F:88:0B": {
+            "alias": "Cris",
+            "cronograma": {
+                "sabado": [
+                    {
+                        "inicio": "15:00",
+                        "fin": "20:03"
+                    }
+                ]
+            }
+        },
+        "60:01:94:20:23:46": {
+            "alias": "NodeMCU del Turco",
+            "cronograma": {
+                "sabado": [
+                    {
+                        "inicio": "15:00",
+                        "fin": "19:55"
+                    }
+                ]
+            }
+        }
+    }
+}

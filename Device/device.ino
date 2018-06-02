@@ -345,7 +345,7 @@ void getGoogleGeolocation() {
     WiFiClientSecure client;
 
     if (client.connect(Host, 443)) {
-        client.println("POST " + thisPage + key + " HTTP/1.1");    
+        client.println("POST " + thisPage + key + " HTTP/1.1");
         client.println("Host: "+ (String)Host);
         client.println("Connection: close");
         client.println("Content-Type: application/json");

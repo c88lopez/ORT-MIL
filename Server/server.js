@@ -13,6 +13,16 @@ app.use(bodyParser.json())
 
 app.use(express.static(path.join(__dirname, '/public')));
 
+const weekday = new Array(7);
+weekday[0] = "domingo";
+weekday[1] = "lunes";
+weekday[2] = "martes";
+weekday[3] = "miercoles";
+weekday[4] = "jueves";
+weekday[5] = "viernes";
+weekday[6] = "sabado";
+
+
 const devices = {};
 
 server.listen(3000, process.argv[2], function() {
@@ -48,23 +58,71 @@ app.post('/accel', function(req, res) {
     /**
      * Si el dispositivo no fue suscripto entonces se ignora.
      */
-    if (!config.devices.hasOwnProperty(macAddress)) {
-        return
+    if (
+        !config.dispositivos.hasOwnProperty(macAddress)
+        || !isInWorkInterval(macAddress, req.body.data.currentTime)
+    ) {
+        return;
     }
 
     if (devices.hasOwnProperty(macAddress)) {
         devices[macAddress].unshift(data);
-        if (devices[macAddress].length > config.dataStoredPerDevice) {
+        if (devices[macAddress].length > config.datosPorDispositivo) {
             devices[macAddress].pop();
             req.body.data.isMoving = 
-                isMoving(devices[macAddress], 'x') || isMoving(devices[macAddress], 'y') ||isMoving(devices[macAddress], 'z');
+                isMoving(devices[macAddress], 'x') 
+                || isMoving(devices[macAddress], 'y') 
+                || isMoving(devices[macAddress], 'z');
         }
     } else {
         devices[macAddress] = [data];
     }
 
+    req.body.data.alias = config.dispositivos[macAddress].alias;
+
     io.emit('accelData', req.body);
 });
+
+function isInWorkInterval(macAddress) {
+    const currentTimeObject = new Date();
+
+    let valido = false;
+
+    if (config.dispositivos[macAddress].cronograma.hasOwnProperty(weekday[currentTimeObject.getDay()])) {
+        config.dispositivos[macAddress].cronograma[weekday[currentTimeObject.getDay()]].forEach((horas) => {
+            const currentHour = addZeroPadding(currentTimeObject.getHours());
+            const currentMinute = addZeroPadding(currentTimeObject.getMinutes());
+
+            const configuredStartHour = addZeroPadding(horas.inicio.split(':')[0]);
+            const configuredStartMinute = addZeroPadding(horas.inicio.split(':')[1]);
+
+            const configuredEndHour = addZeroPadding(horas.fin.split(':')[0]);
+            const configuredEndMinute = addZeroPadding(horas.fin.split(':')[1]);
+
+console.log('macAddress', macAddress);
+console.log('currentHour', currentHour);
+console.log('currentMinute', currentMinute);
+console.log('configuredStartHour', configuredStartHour);
+console.log('configuredStartMinute', configuredStartMinute);
+console.log('configuredEndHour', configuredEndHour);
+console.log('configuredEndMinute', configuredEndMinute);
+
+            if (
+                configuredStartHour <= currentHour && configuredStartMinute <= currentMinute
+                && configuredEndHour >= currentHour && configuredEndMinute >= currentMinute
+            ) {
+                valido = true;
+                return;
+            }
+        })
+    }
+
+    return valido;
+}
+
+function addZeroPadding(value) {
+    return ('0' + value).substr(-2);
+}
 
 function isMoving(data, axis) {
     let accelMax;
