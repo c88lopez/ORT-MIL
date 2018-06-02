@@ -5,24 +5,15 @@ const server = require('http').Server(app);
 const io = require('socket.io')(server);
 const path = require('path');
 const os = require('os');
-// const fs = require('fs');
+const fs = require('fs');
+
+const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 
 app.use(bodyParser.json())
 
 app.use(express.static(path.join(__dirname, '/public')));
 
-const interfaces = os.networkInterfaces();
-const addresses = [];
-for (var k in interfaces) {
-    for (var k2 in interfaces[k]) {
-        if (interfaces[k][k2].family === 'IPv4' && !interfaces[k][k2].internal) {
-            addresses.push(interfaces[k][k2].address);
-        }
-    }
-}
-
 const devices = {};
-const dataStoredPerDevice = 2;
 
 server.listen(3000, process.argv[2], function() {
     console.log(
@@ -34,12 +25,6 @@ server.listen(3000, process.argv[2], function() {
 
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
-});
-
-app.post('/location', function(req, res) {
-    location = req.body
-    io.emit('location', location);	
-    console.log(req.body.city)
 });
 
 app.post('/accel', function(req, res) {
@@ -60,30 +45,25 @@ app.post('/accel', function(req, res) {
 
     req.body.data.currentTime = Date.now();
 
+    /**
+     * Si el dispositivo no fue suscripto entonces se ignora.
+     */
+    if (!config.devices.hasOwnProperty(macAddress)) {
+        return
+    }
+
     if (devices.hasOwnProperty(macAddress)) {
         devices[macAddress].unshift(data);
-        if (devices[macAddress].length > dataStoredPerDevice) {
+        if (devices[macAddress].length > config.dataStoredPerDevice) {
             devices[macAddress].pop();
             req.body.data.isMoving = 
-            isMoving(devices[macAddress], 'x') || isMoving(devices[macAddress], 'y') ||isMoving(devices[macAddress], 'z');
+                isMoving(devices[macAddress], 'x') || isMoving(devices[macAddress], 'y') ||isMoving(devices[macAddress], 'z');
         }
     } else {
         devices[macAddress] = [data];
     }
 
     io.emit('accelData', req.body);
-
-    // fs.appendFileSync(`./${macAddress}.csv`, `${accelX},${accelY},${accelZ},${gyroX},${gyroY},${gyroZ}\n`)
-});
-
-io.on('connection', function (socket) {
-    socket.on('location', function (data) {
-        console.log(data);
-    });
-
-    //socket.on('accelData', function (data) {
-        //console.log(data);
-    //});
 });
 
 function isMoving(data, axis) {

@@ -1,5 +1,6 @@
 {
-    "macAddresses": {
+    "dataStoredPerDevice": 2,
+    "devices": {
         "60:01:94:1F:88:0B": {
             "datetimes": {
                 "sat": [

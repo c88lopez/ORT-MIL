@@ -55,7 +55,7 @@
 
 			deviceRow.children(".last-comunication").text(
 				`${('0'+lastComunication.getDate()).substr(-2)}-${('0'+lastComunication.getMonth()).substr(-2)}-${lastComunication.getFullYear()}`
-				+ ` ${lastComunication.getHours()}:${lastComunication.getMinutes()}:${lastComunication.getSeconds()}`
+				+ ` ${lastComunication.getHours()}:${('0'+lastComunication.getMinutes()).substr(-2)}:${('0'+lastComunication.getSeconds()).substr(-2)}`
 			);
 
 			deviceRow.children(".SSID").text(data.SSID);
