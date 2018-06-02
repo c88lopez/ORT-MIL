@@ -406,10 +406,10 @@ void loop() {
     readRawMPU();    // Lee los datos del acelerómetro
 
     if ((getPositionPeriod / loopFreq) < loopCount ) {
-      // API call a Google Location API para obtener coordenas de geolocalizacion del dispositivo.
-      getGoogleGeolocation();
+        // API call a Google Location API para obtener coordenas de geolocalizacion del dispositivo.
+        getGoogleGeolocation();
 
-      loopCount = 0;
+        loopCount = 0;
     }
 
     populateJSON();  // Crea el objeto JSON con los datos del acelerómetro
