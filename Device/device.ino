@@ -415,7 +415,7 @@ void loop() {
     populateJSON();  // Crea el objeto JSON con los datos del acelerómetro
     makePOST();      // Hace el POST en el NodeJS server
 
-    if ((30000 / loopFreq)) < loopCount ) {
+    if ((30000 / loopFreq) < loopCount ) {
         tcpCleanup();    // Cleanup de las conexiones TCP al sistema remoto para evitar el memory leak
     }
 
