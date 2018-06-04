@@ -80,6 +80,10 @@ app.post('/accel', function(req, res) {
 
     req.body.data.alias = config.dispositivos[macAddress].alias;
 
+    fs.appendFile('message.txt', JSON.stringify(req.body.data) + "\n", function (err) {
+        if (err) throw err;
+    });
+
     io.emit('accelData', req.body);
 });
 

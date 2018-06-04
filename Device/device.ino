@@ -25,6 +25,8 @@ int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
 String currentMacAddress = WiFi.macAddress();
 String currentSSID       = WiFi.SSID();
 
+float batteryLevel = 0.0;
+
 int status = WL_IDLE_STATUS;
 String jsonString = "{\n";
 double latitude   = 0.0;
@@ -267,7 +269,7 @@ void populateJSON() {
     data["SSID"] = currentSSID;
     data["RSSI"] = WiFi.RSSI();
 
-    data["battery"] = "83.45";
+    data["battery"] = batteryLevel;
 
     data["position"]["latitude"] = latitude;
     data["position"]["longitude"] = longitude;
@@ -283,6 +285,10 @@ void populateJSON() {
 
     object.printTo(Serial);
     Serial.println();
+}
+
+void getBatteryLevel() {
+   batteryLevel = analogRead(A0) * (5.0 / 1023.0);
 }
 
 /*
@@ -411,6 +417,8 @@ void loop() {
 
         loopCount = 0;
     }
+
+    getBatteryLevel();
 
     populateJSON();  // Crea el objeto JSON con los datos del acelerómetro
     makePOST();      // Hace el POST en el NodeJS server
