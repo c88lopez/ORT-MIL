@@ -79,7 +79,7 @@ app.post('/accel', function(req, res) {
 
     req.body.data.alias = config.dispositivos[macAddress].alias;
 
-    fs.appendFile('message.txt', JSON.stringify(req.body.data) + "\n", function (err) {
+    fs.appendFile(`${macAddress}.log`, `${req.body.data.currentTime},${req.body.data.battery}` + "\n", function (err) {
         if (err) throw err;
     });
 
