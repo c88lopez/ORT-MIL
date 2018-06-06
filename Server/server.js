@@ -22,7 +22,6 @@ weekday[4] = "jueves";
 weekday[5] = "viernes";
 weekday[6] = "sabado";
 
-
 const devices = {};
 
 server.listen(3000, process.argv[2], function() {
