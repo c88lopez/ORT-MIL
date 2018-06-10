@@ -4,7 +4,6 @@ const bodyParser = require('body-parser');
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
 const path = require('path');
-const os = require('os');
 const fs = require('fs');
 
 const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
@@ -79,9 +78,11 @@ app.post('/accel', function(req, res) {
 
     req.body.data.alias = config.dispositivos[macAddress].alias;
 
-    fs.appendFile(`${macAddress}.log`, `${req.body.data.currentTime},${req.body.data.battery}` + "\n", function (err) {
+    fs.appendFile(`${macAddress.split(':').join('_')}.csv`, `${req.body.data.currentTime},${req.body.data.analogRead}` + "\n", function (err) {
         if (err) throw err;
     });
+
+    req.body.data.battery = getBatteryLevel(req.body.data.analogRead);
 
     io.emit('accelData', req.body);
 });
@@ -134,4 +135,22 @@ function isMoving(data, axis) {
     });
 
     return (accelMax - accelMin) > 1000
+}
+
+function getBatteryLevel(analogRead) {
+    const max = 940
+        , min = 700;
+
+    let level = (analogRead - min) / (max - min) * 100;
+
+console.log(analogRead);
+
+    if (level > 100) {
+        level = 100;
+    } else if (level < 0) {
+        level = 0;
+    }
+
+    return Number(level.toFixed(0));
+;
 }
