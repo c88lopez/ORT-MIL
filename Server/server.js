@@ -57,8 +57,11 @@ app.post('/accel', function(req, res) {
      * Si el dispositivo no fue suscripto entonces se ignora.
      */
     if (
-        !config.dispositivos.hasOwnProperty(macAddress)
-        || !isInWorkInterval(macAddress, req.body.data.currentTime)
+        config.suscripcionDispositivos
+        && (
+            !config.dispositivos.hasOwnProperty(macAddress)
+            || !isInWorkInterval(macAddress, req.body.data.currentTime)
+        )
     ) {
         return;
     }
