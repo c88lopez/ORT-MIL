@@ -10,8 +10,10 @@
   "author": "giobauermeister",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.254.1",
     "body-parser": "^1.16.0",
     "express": "^4.14.1",
-    "socket.io": "^1.7.2"
+    "socket.io": "^1.7.2",
+    "uuid": "^3.2.1"
   }
 }
