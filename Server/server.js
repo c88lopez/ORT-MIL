@@ -79,7 +79,11 @@ app.post('/accel', function(req, res) {
         devices[macAddress] = [data];
     }
 
-    req.body.data.alias = config.dispositivos[macAddress].alias;
+    let alias = 'Unknown Device';
+    if (config.dispositivos[macAddress]) {
+        alias = config.dispositivos[macAddress].alias;
+    }
+    req.body.data.alias = alias;
 
     fs.appendFile(`${macAddress.split(':').join('_')}.csv`, `${req.body.data.currentTime},${req.body.data.analogRead}` + "\n", function (err) {
         if (err) throw err;
