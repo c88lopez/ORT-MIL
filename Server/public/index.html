@@ -69,7 +69,8 @@
 
 			const mapsLink = document.createElement('a');
 			mapsLink.appendChild(document.createTextNode('Maps'));
-			mapsLink.tittle = 'Maps';
+			mapsLink.title = 'Maps';
+			mapsLink.target = '_blank';
 			mapsLink.href = 'https://www.google.com/maps/@'+data.position.latitude+','+data.position.longitude+',16z'
 
 			deviceRow.children(".location").html(mapsLink);
