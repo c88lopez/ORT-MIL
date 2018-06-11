@@ -58,7 +58,7 @@
 			/**
 			 * timezone correction
 			 */
-			lastComunication.setHours(lastComunication.getHours() - 3);
+			lastComunication.setHours(lastComunication.getHours());
 
 			deviceRow.children(".last-comunication").text(
 				`${('0'+lastComunication.getDate()).substr(-2)}-${('0'+(lastComunication.getMonth()+1)).substr(-2)}-${lastComunication.getFullYear()}`
