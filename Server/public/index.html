@@ -16,8 +16,7 @@
 							<th>Ult. comunicación</th>
 							<th>SSID</th>
 							<th>RSSI</th>
-							<th>Latitud</th>
-							<th>Longitud</th>
+							<th>Ubicación</th>
 							<th>Precisión</th>
 							<th>En movimiento</th>
 							<th>Estado Batería</th>
@@ -67,8 +66,13 @@
 
 			deviceRow.children(".SSID").text(data.SSID);
 			deviceRow.children(".RSSI").text(data.RSSI);
-			deviceRow.children(".lat").text(data.position.latitude);
-			deviceRow.children(".lon").text(data.position.longitude);
+
+			const mapsLink = document.createElement('a');
+			mapsLink.appendChild(document.createTextNode('Maps'));
+			mapsLink.tittle = 'Maps';
+			mapsLink.href = 'https://www.google.com/maps/@'+data.position.latitude+','+data.position.longitude+',16z'
+
+			deviceRow.children(".location").html(mapsLink);
 			deviceRow.children(".accuracy").text(data.position.accuracy);
 
 			if (data.isMoving) {
@@ -87,8 +91,7 @@
 					+ '<td class=\"last-comunication\"></td>'
 					+ '<td class=\"SSID\"></td>'
 					+ '<td class=\"RSSI\"></td>'
-					+ '<td class=\"lat\"></td>'
-					+ '<td class=\"lon\"></td>'
+					+ '<td class=\"location\"></td>'
 					+ '<td class=\"accuracy\"></td>'
 					+ '<td class=\"in-movement\"></td>'
 					+ '<td class=\"battery\">83%</td>'
