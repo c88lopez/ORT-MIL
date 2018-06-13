@@ -1,17 +1,15 @@
 {
-  "name": "mpu6050-server",
+  "name": "mil-server",
   "version": "1.0.0",
-  "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "NODE_ENV=production node server.js",
+    "dev": "NODE_ENV=development nodemon server.js"
   },
-  "author": "giobauermeister",
-  "license": "ISC",
   "dependencies": {
     "body-parser": "^1.16.0",
     "express": "^4.14.1",
-    "socket.io": "^1.7.2"
+    "socket.io": "^1.7.2",
+    "winston": "^3.0.0"
   }
 }
