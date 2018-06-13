@@ -6,6 +6,25 @@ const io = require('socket.io')(server);
 const path = require('path');
 const fs = require('fs');
 
+const { createLogger, format, transports } = require('winston');
+const { combine, timestamp, label, printf } = format;
+
+const logger = createLogger({
+    level: 'info',
+    format: combine(
+        timestamp(),
+        printf(info => `[${info.timestamp}] - [${info.level}] - ${info.message}`)
+    ),
+    transports: [
+        new transports.File({ filename: 'logs/error.log', level: 'error' }),
+        new transports.File({ filename: 'logs/combined.log' })
+    ]
+});
+
+if (process.env.NODE_ENV !== 'production') {
+    logger.add(new transports.Console({}))
+}
+
 const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 
 app.use(bodyParser.json())
@@ -24,11 +43,10 @@ weekday[6] = "sabado";
 const devices = {};
 
 server.listen(3000, process.argv[2], function() {
-    console.log(
-        "Server listening on %s:%s...", 
-        server.address().address, 
-        server.address().port
-    );
+    logger.log({
+        level: 'info',
+        message: `Server listening on ${server.address().address}:${server.address().port}...`
+    });
 });
 
 app.get('/', function (req, res) {

@@ -1,5 +1,7 @@
-
-*.csv
 *.csv
 Device/config.ino
 Server/config.json
+
+Server/node_modules
+
+Server/logs/*.log
