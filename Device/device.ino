@@ -14,10 +14,10 @@ const int GYRO_CONFIG =   0x1B; // Registro de configuración del giroscopio.
 const int ACCEL_CONFIG =  0x1C; // Registro de configuración del acelerómetro.
 const int ACCEL_XOUT =    0x3B; // Registro de lectura del eje X del acelerómetro
 
-const int sda_pin = D5; // Definición del pin I2C SDA
-const int scl_pin = D6; // Definición del pin I2C SCL
+const int sda_pin = D6; // Definición del pin I2C SDA
+const int scl_pin = D5; // Definición del pin I2C SCL
 
-bool led_state = false;
+// bool led_state = false;
 
 // Variables de los datos sensados.
 int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ; 
@@ -47,6 +47,71 @@ JsonObject& gyro     = data.createNestedObject("gyro");
 
 const int loopFreq = 1000;
 int loopCount = 0;
+
+/*********************
+ * Manejo del cátodo *
+ *********************/
+const int redPin = D1, greenPin = D2, bluePin = D3;
+
+void twinkleLed(String color, int times = 2) {
+    if (color == "red") {
+        ledRed(times);
+    } else if (color == "yellow") {
+        ledYellow(times);
+    } else if (color == "green") {
+        twinkleGreenLed(times);
+    }
+}
+
+void ledRed(int twinkledTimes) {
+    for (int i = 0 ; i < twinkledTimes ; i++) {
+        digitalWrite(redPin, HIGH);
+        delay(100);
+        digitalWrite(redPin, LOW);
+        delay(100);
+    }
+}
+
+void twinkleGreenLed(int twinkledTimes) {
+    for (int i = 0 ; i < twinkledTimes ; i++) {
+        ledGreen(true); delay(100);
+        ledGreen(false); delay(100);
+    }
+}
+
+void twinkleRedLed(int twinkledTimes) {
+    for (int i = 0 ; i < twinkledTimes ; i++) {
+        ledRed(true); delay(100);
+        ledRed(false); delay(100);
+    }
+}
+
+void twinkleYellowLed(int twinkledTimes) {
+    for (int i = 0 ; i < twinkledTimes ; i++) {
+        ledYellow(true); delay(100);
+        ledYellow(false); delay(100);
+    }
+}
+
+void ledBlue(bool on) {
+    digitalWrite(bluePin, on);
+}
+
+void ledGreen(bool on) {
+    digitalWrite(greenPin, on);
+}
+
+void ledRed(bool on) {
+    digitalWrite(redPin, on);
+}
+
+void ledYellow(bool on) {
+    digitalWrite(redPin, on);
+    digitalWrite(greenPin, on);
+}
+/*********************
+ * Fin manejo cátodo *
+ *********************/
 
 /*
  * initI2C
@@ -214,8 +279,8 @@ void readRawMPU() {
     AcZ = Wire.read() << 8;
     AcZ |= Wire.read(); 
 
-    led_state = !led_state;
-    digitalWrite(LED_BUILTIN, led_state); // Parpadea el LED en cada transmisión
+    // led_state = !led_state;
+    // digitalWrite(LED_BUILTIN, led_state); // Parpadea el LED en cada transmisión
 
     delay(50);
 }
@@ -305,8 +370,10 @@ void getAnalogRead() {
 void makePOST() {
     if (!client.connect(rpiHost, 3000)) {
         Serial.println("No se pudo conectar con el servidor!\n");
+        twinkleRedLed(3);
     } else { 
         Serial.println("Conectado al servidor");
+
         // HTTP POST request
         client.println("POST /accel HTTP/1.1");
         client.println("Host: 192.168.1.198");
@@ -315,6 +382,8 @@ void makePOST() {
         client.println(object.measureLength());
         client.println();
         object.printTo(client); // Envía el JSON
+
+        twinkleLed("green");
     }
 }
 
@@ -397,7 +466,17 @@ void tcpCleanup () {
 
 // First run
 void setup() {
-    pinMode(LED_BUILTIN, OUTPUT);
+    pinMode(redPin, OUTPUT);
+    pinMode(greenPin, OUTPUT);
+    pinMode(bluePin, OUTPUT);
+    pinMode(LED_BUILTIN, false);
+    
+    ledBlue(false);
+    ledGreen(false);
+    ledRed(false);
+
+    ledYellow(true);
+
     Serial.begin(9600);
 
     Serial.println("\nIniciando configuración de WiFi\n");
@@ -410,6 +489,8 @@ void setup() {
 
     // Obtengo la ubicación al conectarse.
     getGoogleGeolocation();
+
+    ledYellow(false);
 
     Serial.println("\nConfiguración finalizada iniciando loop\n");
 }
