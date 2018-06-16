@@ -8,7 +8,7 @@
 	<body>
 		<div class="container-fluid">
 			<div class="row">
-				<table class="table table-striped table-hover table-sm">
+				<table class="table table-striped table-hover table-sm table-bordered">
 					<thead>
 						<tr>
 							<th>Mac Address</th>
@@ -19,6 +19,7 @@
 							<th>Ubicación</th>
 							<th>Precisión</th>
 							<th>En movimiento</th>
+							<th>Tiempo sin movimiento</th>
 							<th>Estado Batería</th>
 						</tr>
 					</thead>
@@ -35,24 +36,25 @@
 	<script type="text/javascript">
 
 		var socket = io.connect();
+		var tbody = $('tbody');
 
 		socket.on('accelData', function(accelData) {
-			var macAddress = accelData.data.macAddress.split(':').join('_')
-			
-			var deviceRow = $('tr#' + macAddress)
+			tbody.empty();
 
-			if (deviceRow.length === 1) {
-				updateRow(deviceRow, accelData.data);
-			} else {
-				newRow(macAddress)
-				updateRow($('tr#' + macAddress), accelData.data)
-			}
+			accelData.forEach((deviceData) => {
+console.log(deviceData);
+				var macAddress = deviceData.serial.split(':').join('_')
+				var deviceRow = $('tr#' + macAddress)
+
+				newRow(macAddress);
+				updateRow($('tr#' + macAddress), deviceData);
+			});
 		});
 
 		function updateRow(deviceRow, data) {
 			deviceRow.children(".alias").text(data.alias);
 
-			lastComunication = new Date(data.currentTime);
+			lastComunication = new Date(data.ultimaTransmision);
 
 			/**
 			 * timezone correction
@@ -64,25 +66,27 @@
 				+ ` ${lastComunication.getHours()}:${('0'+lastComunication.getMinutes()).substr(-2)}:${('0'+lastComunication.getSeconds()).substr(-2)}`
 			);
 
-			deviceRow.children(".SSID").text(data.SSID);
-			deviceRow.children(".RSSI").text(data.RSSI);
+			deviceRow.children(".SSID").text(data.wifi.ssid);
+			deviceRow.children(".RSSI").text(data.wifi.intensidad);
 
 			const mapsLink = document.createElement('a');
 			mapsLink.appendChild(document.createTextNode('Maps'));
 			mapsLink.title = 'Maps';
 			mapsLink.target = '_blank';
-			mapsLink.href = 'https://www.google.com/maps/@'+data.position.latitude+','+data.position.longitude+',16z'
+			mapsLink.href = 'https://www.google.com/maps/@'+data.geoposicion.lat+','+data.geoposicion.lon+',16z'
 
 			deviceRow.children(".location").html(mapsLink);
-			deviceRow.children(".accuracy").text(data.position.accuracy);
+			deviceRow.children(".accuracy").text(data.geoposicion.accuracy);
 
-			if (data.isMoving) {
+			if (data.enMovimiento) {
 				deviceRow.children(".in-movement").removeClass('bg-danger').addClass('bg-success');
 			} else {
 				deviceRow.children(".in-movement").removeClass('bg-success').addClass('bg-danger');
 			}
 
-			deviceRow.children(".battery").text(data.battery + ' %');
+			deviceRow.children(".seconds-no-movement").text(data.tiempoQuieto + ' segundos');
+
+			deviceRow.children(".battery").text(data.bateria + ' %');
 		}
 
 		function newRow(macAddress) {
@@ -95,6 +99,7 @@
 					+ '<td class=\"location\"></td>'
 					+ '<td class=\"accuracy\"></td>'
 					+ '<td class=\"in-movement\"></td>'
+					+ '<td class=\"seconds-no-movement\"></td>'
 					+ '<td class=\"battery\">83%</td>'
 				+ '</tr\>';
 

@@ -40,8 +40,6 @@ weekday[4] = "jueves";
 weekday[5] = "viernes";
 weekday[6] = "sabado";
 
-const devices = {};
-
 server.listen(3000, process.argv[2], function() {
     logger.log({
         level: 'info',
@@ -53,23 +51,31 @@ app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
 });
 
+const devicesAccel = {};
+let devices = [];
+const deviceTemplate = {
+    serial: '',
+    tipo: 'HombreQuieto',
+    alias: 'Desconocido',
+    ultimaTransmision: 0,
+    enMovimiento: 0,
+    tiempoQuieto: 0,
+    bateria: 0.0,
+    geoposicio: {
+        lat: 0.0,
+        lon: 0.0,
+        accuracy: 0,
+    },
+    wifi: {
+        ssid: '',
+        intencidad: 0,
+    },
+};
+
+const publishInterval = 1000;
+
 app.post('/accel', function(req, res) {
     const macAddress = req.body.data.macAddress;
-
-    const data = {
-        accel: {
-            x: req.body.data.accel.x,
-            y: req.body.data.accel.y,
-            z: req.body.data.accel.z,
-        },
-        gyro: {
-            x: req.body.data.gyro.x,
-            y: req.body.data.gyro.y,
-            z: req.body.data.gyro.z,
-        },
-    }
-
-    req.body.data.currentTime = Date.now();
 
     /**
      * Si el dispositivo no fue suscripto entonces se ignora.
@@ -83,33 +89,87 @@ app.post('/accel', function(req, res) {
     ) {
         return;
     }
-
-    if (devices.hasOwnProperty(macAddress)) {
-        devices[macAddress].unshift(data);
-        if (devices[macAddress].length > config.datosPorDispositivo) {
-            devices[macAddress].pop();
-            req.body.data.isMoving = 
-                isMoving(devices[macAddress], 'x') 
-                || isMoving(devices[macAddress], 'y') 
-                || isMoving(devices[macAddress], 'z');
-        }
-    } else {
-        devices[macAddress] = [data];
+    
+    const data = {
+        accel: {
+            x: req.body.data.accel.x,
+            y: req.body.data.accel.y,
+            z: req.body.data.accel.z,
+        },
+        gyro: {
+            x: req.body.data.gyro.x,
+            y: req.body.data.gyro.y,
+            z: req.body.data.gyro.z,
+        },
     }
 
-    let alias = 'Unknown Device';
+    if (devicesAccel.hasOwnProperty(macAddress)) {
+        devicesAccel[macAddress].unshift(data);
+        if (devicesAccel[macAddress].length > config.datosPorDispositivo) {
+            devicesAccel[macAddress].pop();
+            req.body.data.isMoving = 
+                isMoving(devicesAccel[macAddress], 'x') 
+                || isMoving(devicesAccel[macAddress], 'y') 
+                || isMoving(devicesAccel[macAddress], 'z');
+        }
+    } else {
+        devicesAccel[macAddress] = [data];
+    }
+
+    let alias = deviceTemplate.alias;
     if (config.dispositivos[macAddress]) {
         alias = config.dispositivos[macAddress].alias;
     }
-    req.body.data.alias = alias;
+
+    if (devices.length === 0 || !devices.some(d => d.serial === macAddress)) {
+        devices.push(
+            { 
+                serial: macAddress,
+                alias: alias,
+                ultimaTransmision: Date.now(),
+                enMovimiento: (req.body.data.isMoving) ? 1 : 0,
+                tiempoQuieto: 0,
+                bateria: getBatteryLevel(req.body.data.analogRead),
+                geoposicion: {
+                    lat: req.body.data.position.latitude,
+                    lon: req.body.data.position.longitude,
+                    accuracy: req.body.data.position.accuracy,
+                },
+                wifi: {
+                    ssid: req.body.data.SSID,
+                    intensidad: req.body.data.RSSI,
+                },
+            }
+        )
+    } else {
+        devices = devices.map((device) => {
+            if (device.serial !== macAddress) {
+                return device;
+            }
+    
+            return {
+                serial: device.serial,
+                alias: alias,
+                ultimaTransmision: Date.now(),
+                enMovimiento: (req.body.data.isMoving) ? 1 : 0,
+                tiempoQuieto: device.tiempoQuieto,
+                bateria: getBatteryLevel(req.body.data.analogRead),
+                geoposicion: {
+                    lat: req.body.data.position.latitude,
+                    lon: req.body.data.position.longitude,
+                    accuracy: req.body.data.position.accuracy,
+                },
+                wifi: {
+                    ssid: req.body.data.SSID,
+                    intensidad: req.body.data.RSSI,
+                },
+            };
+        });
+    }
 
     fs.appendFile(`${macAddress.split(':').join('_')}.csv`, `${req.body.data.currentTime},${req.body.data.analogRead}` + "\n", function (err) {
         if (err) throw err;
     });
-
-    req.body.data.battery = getBatteryLevel(req.body.data.analogRead);
-
-    io.emit('accelData', req.body);
 });
 
 function isInWorkInterval(macAddress) {
@@ -159,7 +219,7 @@ function isMoving(data, axis) {
         }
     });
 
-    return (accelMax - accelMin) > 1000
+    return ((accelMax - accelMin) > 1000) ? 1 : 0;
 }
 
 function getBatteryLevel(analogRead) {
@@ -168,8 +228,6 @@ function getBatteryLevel(analogRead) {
 
     let level = (analogRead - min) / (max - min) * 100;
 
-console.log(analogRead);
-
     if (level > 100) {
         level = 100;
     } else if (level < 0) {
@@ -177,5 +235,23 @@ console.log(analogRead);
     }
 
     return Number(level.toFixed(0));
-;
 }
+
+setInterval(() => {
+
+    io.emit(
+        'accelData', 
+        devices.map((device) => {
+            if ((Date.now()) - device.ultimaTransmision > 5000) {
+                device.enMovimiento = false;
+            }
+
+            device.tiempoQuieto = device.enMovimiento
+                ? 0
+                : (device.tiempoQuieto + publishInterval / 1000);
+
+            return device;
+        })
+    );
+
+}, config.periodoPublicacion);
