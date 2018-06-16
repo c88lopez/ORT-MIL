@@ -42,7 +42,6 @@
 			tbody.empty();
 
 			accelData.forEach((deviceData) => {
-console.log(deviceData);
 				var macAddress = deviceData.serial.split(':').join('_')
 				var deviceRow = $('tr#' + macAddress)
 

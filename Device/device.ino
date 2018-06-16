@@ -298,8 +298,11 @@ void reconnectWiFi() {
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(100);
+        twinkleYellowLed(3);
         Serial.print(".");
     }
+
+    ledYellow(true);
 
     Serial.println();
     Serial.print("Conexón de red exitosa: ");
