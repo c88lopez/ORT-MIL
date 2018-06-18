@@ -6,6 +6,8 @@ const io = require('socket.io')(server);
 const path = require('path');
 const fs = require('fs');
 
+const dynamo = require('./dynamo');
+
 const { createLogger, format, transports } = require('winston');
 const { combine, timestamp, label, printf } = format;
 
@@ -26,6 +28,8 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+
+dynamo.init(config.aws);
 
 app.use(bodyParser.json())
 
@@ -121,12 +125,14 @@ app.post('/accel', function(req, res) {
         alias = config.dispositivos[macAddress].alias;
     }
 
+    const now = Date.now();
+
     if (devices.length === 0 || !devices.some(d => d.serial === macAddress)) {
         devices.push(
             { 
                 serial: macAddress,
                 alias: alias,
-                ultimaTransmision: Date.now(),
+                ultimaTransmision: now,
                 enMovimiento: (req.body.data.isMoving) ? 1 : 0,
                 tiempoQuieto: 0,
                 bateria: getBatteryLevel(req.body.data.analogRead),
@@ -150,7 +156,7 @@ app.post('/accel', function(req, res) {
             return {
                 serial: device.serial,
                 alias: alias,
-                ultimaTransmision: Date.now(),
+                ultimaTransmision: now,
                 enMovimiento: (req.body.data.isMoving) ? 1 : 0,
                 tiempoQuieto: device.tiempoQuieto,
                 bateria: getBatteryLevel(req.body.data.analogRead),
@@ -167,7 +173,7 @@ app.post('/accel', function(req, res) {
         });
     }
 
-    fs.appendFile(`${macAddress.split(':').join('_')}.csv`, `${req.body.data.currentTime},${req.body.data.analogRead}` + "\n", function (err) {
+    fs.appendFile(`${macAddress.split(':').join('_')}.csv`, `${now},${req.body.data.analogRead}` + "\n", function (err) {
         if (err) throw err;
     });
 });
@@ -219,7 +225,7 @@ function isMoving(data, axis) {
         }
     });
 
-    return ((accelMax - accelMin) > 1000) ? 1 : 0;
+    return ((accelMax - accelMin) > config.sensibilidadDeteccionMovimiento) ? 1 : 0;
 }
 
 function getBatteryLevel(analogRead) {
@@ -238,20 +244,19 @@ function getBatteryLevel(analogRead) {
 }
 
 setInterval(() => {
+    devices = devices.map((device) => {
+        if ((Date.now()) - device.ultimaTransmision > config.tiempoSinTransmisionComoSinMovimiento * 1000) {
+            device.enMovimiento = false;
+        }
 
-    io.emit(
-        'accelData', 
-        devices.map((device) => {
-            if ((Date.now()) - device.ultimaTransmision > 5000) {
-                device.enMovimiento = false;
-            }
+        device.tiempoQuieto = device.enMovimiento
+            ? 0
+            : (device.tiempoQuieto + publishInterval / 1000);
 
-            device.tiempoQuieto = device.enMovimiento
-                ? 0
-                : (device.tiempoQuieto + publishInterval / 1000);
+        return device;
+    });
 
-            return device;
-        })
-    );
+    io.emit('accelData', devices);
+    dynamo.putData(devices);
 
 }, config.periodoPublicacion);
