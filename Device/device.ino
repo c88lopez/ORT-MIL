@@ -14,8 +14,8 @@ const int GYRO_CONFIG =   0x1B; // Registro de configuración del giroscopio.
 const int ACCEL_CONFIG =  0x1C; // Registro de configuración del acelerómetro.
 const int ACCEL_XOUT =    0x3B; // Registro de lectura del eje X del acelerómetro
 
-const int sda_pin = D6; // Definición del pin I2C SDA
-const int scl_pin = D5; // Definición del pin I2C SCL
+const int sda_pin = D1; // Definición del pin I2C SDA
+const int scl_pin = D2; // Definición del pin I2C SCL
 
 // bool led_state = false;
 
@@ -51,7 +51,7 @@ int loopCount = 0;
 /*********************
  * Manejo del cátodo *
  *********************/
-const int redPin = D1, greenPin = D2, bluePin = D3;
+const int redPin = D5, greenPin = D6, bluePin = D7;
 
 void twinkleLed(String color, int times = 2) {
     if (color == "red") {
