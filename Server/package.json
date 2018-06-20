@@ -7,6 +7,7 @@
     "dev": "NODE_ENV=development nodemon server.js"
   },
   "dependencies": {
+    "aws-iot-device-sdk": "^2.2.1",
     "aws-sdk": "^2.254.1",
     "body-parser": "^1.16.0",
     "express": "^4.14.1",

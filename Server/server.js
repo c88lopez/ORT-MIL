@@ -6,6 +6,8 @@ const io = require('socket.io')(server);
 const path = require('path');
 const fs = require('fs');
 
+const deviceModule = require('aws-iot-device-sdk').device;
+
 const dynamo = require('./dynamo');
 
 const { createLogger, format, transports } = require('winston');
@@ -132,19 +134,15 @@ app.post('/accel', function(req, res) {
             { 
                 serial: macAddress,
                 alias: alias,
-                ultimaTransmision: now,
+                readTime: now,
                 enMovimiento: (req.body.data.isMoving) ? 1 : 0,
                 tiempoQuieto: 0,
                 bateria: getBatteryLevel(req.body.data.analogRead),
-                geoposicion: {
-                    lat: req.body.data.position.latitude,
-                    lon: req.body.data.position.longitude,
-                    accuracy: req.body.data.position.accuracy,
-                },
-                wifi: {
-                    ssid: req.body.data.SSID,
-                    intensidad: req.body.data.RSSI,
-                },
+                lat: req.body.data.position.latitude,
+                lon: req.body.data.position.longitude,
+                accuracy: req.body.data.position.accuracy,
+                ssid: req.body.data.SSID,
+                intensidad: req.body.data.RSSI,
             }
         )
     } else {
@@ -156,26 +154,22 @@ app.post('/accel', function(req, res) {
             return {
                 serial: device.serial,
                 alias: alias,
-                ultimaTransmision: now,
+                readTime: now,
                 enMovimiento: (req.body.data.isMoving) ? 1 : 0,
                 tiempoQuieto: device.tiempoQuieto,
                 bateria: getBatteryLevel(req.body.data.analogRead),
-                geoposicion: {
-                    lat: req.body.data.position.latitude,
-                    lon: req.body.data.position.longitude,
-                    accuracy: req.body.data.position.accuracy,
-                },
-                wifi: {
-                    ssid: req.body.data.SSID,
-                    intensidad: req.body.data.RSSI,
-                },
+                lat: req.body.data.position.latitude,
+                lon: req.body.data.position.longitude,
+                accuracy: req.body.data.position.accuracy,
+                ssid: req.body.data.SSID,
+                intensidad: req.body.data.RSSI,
             };
         });
     }
 
-    fs.appendFile(`${macAddress.split(':').join('_')}.csv`, `${now},${req.body.data.analogRead}` + "\n", function (err) {
-        if (err) throw err;
-    });
+    // fs.appendFile(`${macAddress.split(':').join('_')}.csv`, `${now},${req.body.data.analogRead}` + "\n", function (err) {
+    //     if (err) throw err;
+    // });
 });
 
 function isInWorkInterval(macAddress) {
@@ -257,6 +251,32 @@ setInterval(() => {
     });
 
     io.emit('accelData', devices);
-    dynamo.putData(devices);
+    // dynamo.putData(devices);
+
+    /**
+     * Publish to AWS IoT
+     */
+    const device = deviceModule({
+        /*keyPath: args.privateKey,
+        certPath: args.clientCert,
+        caPath: args.caCert,*/
+        keyPath: './ORT-MIL-SERVER.private.key',
+        certPath: './ORT-MIL-SERVER.cert.pem',
+        caPath: './root-CA.crt',
+        // clientId: args.clientId,
+        // region: args.region,
+        // baseReconnectTimeMs: args.baseReconnectTimeMs,
+        // keepalive: args.keepAlive,
+        // protocol: args.Protocol,
+        // port: args.Port,
+        // host: args.Host,
+        host: 'a1cq7pfnlzpa82.iot.us-east-1.amazonaws.com',
+        // debug: args.Debug
+    });
+
+    device.subscribe('ORT-MIL-SERVER');
+    devices.forEach(iotDevice => {
+        device.publish('ORT-MIL-SERVER', JSON.stringify(iotDevice));
+    });
 
 }, config.periodoPublicacion);

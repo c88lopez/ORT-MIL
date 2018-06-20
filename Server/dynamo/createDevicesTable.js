@@ -11,11 +11,11 @@ const params = {
     TableName : "Devices",
     KeySchema: [
         { AttributeName: "serial", KeyType: "HASH"},   // Partition key
-        { AttributeName: "ultimaTransmision", KeyType: "RANGE" } // Sort key
+        { AttributeName: "readTime", KeyType: "RANGE" } // Sort key
     ],
     AttributeDefinitions: [
         { AttributeName: "serial", AttributeType: "S" },
-        { AttributeName: "ultimaTransmision", AttributeType: "N" }
+        { AttributeName: "readTime", AttributeType: "N" }
     ],
     ProvisionedThroughput: {
         ReadCapacityUnits: 1,

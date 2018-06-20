@@ -6,8 +6,6 @@ const AWSConfig = {};
 
 module.exports = {
     init(newAWSConfig) {
-        console.log(newAWSConfig);
-
         AWSConfig.region = newAWSConfig.region;
         AWSConfig.endpoint = newAWSConfig.endpoint;
     },
@@ -26,21 +24,17 @@ module.exports = {
                     TableName: table,
                     Item:{
                         serial: device.serial,
-                        ultimaTransmision: device.ultimaTransmision,
+                        readTime: device.readTime,
                         data: {
                             alias: device.alias,
                             enMovimiento: device.enMovimiento,
                             tiempoQuieto: device.tiempoQuieto,
                             bateria: device.bateria,
-                            geoposicion: {
-                                lat: device.geoposicion.lat,
-                                lon: device.geoposicion.lon,
-                                precision: device.geoposicion.precision
-                            },
-                            wifi: {
-                                ssid: device.wifi.ssid,
-                                intensidad: device.wifi.intensidad,
-                            },
+                            lat: device.geoposicion.lat,
+                            lon: device.geoposicion.lon,
+                            precision: device.geoposicion.precision,
+                            ssid: device.wifi.ssid,
+                            intensidad: device.wifi.intensidad,
                         },
                     },
                 }, 
