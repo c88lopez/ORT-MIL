@@ -8,8 +8,6 @@ const fs = require('fs');
 
 const deviceModule = require('aws-iot-device-sdk').device;
 
-const dynamo = require('./dynamo');
-
 const { createLogger, format, transports } = require('winston');
 const { combine, timestamp, label, printf } = format;
 
@@ -30,8 +28,6 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
-
-dynamo.init(config.aws);
 
 app.use(bodyParser.json())
 
@@ -251,7 +247,6 @@ setInterval(() => {
     });
 
     io.emit('accelData', devices);
-    // dynamo.putData(devices);
 
     /**
      * Publish to AWS IoT
