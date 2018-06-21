@@ -66,7 +66,7 @@ const deviceTemplate = {
     geoposicio: {
         lat: 0.0,
         lon: 0.0,
-        accuracy: 0,
+        precision: 0,
     },
     wifi: {
         ssid: '',
@@ -136,7 +136,7 @@ app.post('/accel', function(req, res) {
                 bateria: getBatteryLevel(req.body.data.analogRead),
                 lat: req.body.data.position.latitude,
                 lon: req.body.data.position.longitude,
-                accuracy: req.body.data.position.accuracy,
+                precision: req.body.data.position.accuracy,
                 ssid: req.body.data.SSID,
                 intensidad: req.body.data.RSSI,
             }
@@ -156,7 +156,7 @@ app.post('/accel', function(req, res) {
                 bateria: getBatteryLevel(req.body.data.analogRead),
                 lat: req.body.data.position.latitude,
                 lon: req.body.data.position.longitude,
-                accuracy: req.body.data.position.accuracy,
+                precision: req.body.data.position.accuracy,
                 ssid: req.body.data.SSID,
                 intensidad: req.body.data.RSSI,
             };
@@ -251,27 +251,27 @@ setInterval(() => {
     /**
      * Publish to AWS IoT
      */
-    const device = deviceModule({
-        /*keyPath: args.privateKey,
-        certPath: args.clientCert,
-        caPath: args.caCert,*/
-        keyPath: './ORT-MIL-SERVER.private.key',
-        certPath: './ORT-MIL-SERVER.cert.pem',
-        caPath: './root-CA.crt',
-        // clientId: args.clientId,
-        // region: args.region,
-        // baseReconnectTimeMs: args.baseReconnectTimeMs,
-        // keepalive: args.keepAlive,
-        // protocol: args.Protocol,
-        // port: args.Port,
-        // host: args.Host,
-        host: 'a1cq7pfnlzpa82.iot.us-east-1.amazonaws.com',
-        // debug: args.Debug
-    });
+    // const device = deviceModule({
+    //     /*keyPath: args.privateKey,
+    //     certPath: args.clientCert,
+    //     caPath: args.caCert,*/
+    //     keyPath: './ORT-MIL-SERVER.private.key',
+    //     certPath: './ORT-MIL-SERVER.cert.pem',
+    //     caPath: './root-CA.crt',
+    //     // clientId: args.clientId,
+    //     // region: args.region,
+    //     // baseReconnectTimeMs: args.baseReconnectTimeMs,
+    //     // keepalive: args.keepAlive,
+    //     // protocol: args.Protocol,
+    //     // port: args.Port,
+    //     // host: args.Host,
+    //     host: 'a1cq7pfnlzpa82.iot.us-east-1.amazonaws.com',
+    //     // debug: args.Debug
+    // });
 
-    device.subscribe('ORT-MIL-SERVER');
-    devices.forEach(iotDevice => {
-        device.publish('ORT-MIL-SERVER', JSON.stringify(iotDevice));
-    });
+    // device.subscribe('ORT-MIL-SERVER');
+    // devices.forEach(iotDevice => {
+    //     device.publish('ORT-MIL-SERVER', JSON.stringify(iotDevice));
+    // });
 
-}, config.periodoPublicacion);
+}, config.periodoPublicacion || 1000);

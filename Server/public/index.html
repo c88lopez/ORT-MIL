@@ -53,7 +53,7 @@
 		function updateRow(deviceRow, data) {
 			deviceRow.children(".alias").text(data.alias);
 
-			lastComunication = new Date(data.ultimaTransmision);
+			lastComunication = new Date(data.readTime);
 
 			/**
 			 * timezone correction
@@ -65,17 +65,17 @@
 				+ ` ${lastComunication.getHours()}:${('0'+lastComunication.getMinutes()).substr(-2)}:${('0'+lastComunication.getSeconds()).substr(-2)}`
 			);
 
-			deviceRow.children(".SSID").text(data.wifi.ssid);
-			deviceRow.children(".RSSI").text(data.wifi.intensidad);
+			deviceRow.children(".SSID").text(data.ssid);
+			deviceRow.children(".RSSI").text(data.intensidad);
 
 			const mapsLink = document.createElement('a');
 			mapsLink.appendChild(document.createTextNode('Maps'));
 			mapsLink.title = 'Maps';
 			mapsLink.target = '_blank';
-			mapsLink.href = 'https://www.google.com/maps/@'+data.geoposicion.lat+','+data.geoposicion.lon+',16z'
+			mapsLink.href = 'https://www.google.com/maps/@'+data.lat+','+data.lon+',16z'
 
 			deviceRow.children(".location").html(mapsLink);
-			deviceRow.children(".accuracy").text(data.geoposicion.accuracy);
+			deviceRow.children(".accuracy").text(data.precision);
 
 			if (data.enMovimiento) {
 				deviceRow.children(".in-movement").removeClass('bg-danger').addClass('bg-success');
