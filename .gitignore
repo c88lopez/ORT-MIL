@@ -5,3 +5,7 @@ Server/config.json
 Server/node_modules
 
 Server/logs/*.log
+
+Server/libs/awsIot/certs/*.pem
+Server/libs/awsIot/certs/*.key
+Server/libs/awsIot/certs/*.crt

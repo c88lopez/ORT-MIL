@@ -6,7 +6,12 @@ const io = require('socket.io')(server);
 const path = require('path');
 const fs = require('fs');
 
-const deviceModule = require('aws-iot-device-sdk').device;
+const http = require('http');
+
+const Timer = require('./libs/timer');
+
+const awsIot = require('./libs/awsIot');
+awsIot.init();
 
 const { createLogger, format, transports } = require('winston');
 const { combine, timestamp, label, printf } = format;
@@ -55,26 +60,6 @@ app.get('/', function (req, res) {
 
 const devicesAccel = {};
 let devices = [];
-const deviceTemplate = {
-    serial: '',
-    tipo: 'HombreQuieto',
-    alias: 'Desconocido',
-    ultimaTransmision: 0,
-    enMovimiento: 0,
-    tiempoQuieto: 0,
-    bateria: 0.0,
-    geoposicio: {
-        lat: 0.0,
-        lon: 0.0,
-        precision: 0,
-    },
-    wifi: {
-        ssid: '',
-        intencidad: 0,
-    },
-};
-
-const publishInterval = 1000;
 
 app.post('/accel', function(req, res) {
     const macAddress = req.body.data.macAddress;
@@ -118,7 +103,7 @@ app.post('/accel', function(req, res) {
         devicesAccel[macAddress] = [data];
     }
 
-    let alias = deviceTemplate.alias;
+    let alias = 'Desconocido';
     if (config.dispositivos[macAddress]) {
         alias = config.dispositivos[macAddress].alias;
     }
@@ -137,7 +122,7 @@ app.post('/accel', function(req, res) {
                 lat: req.body.data.position.latitude,
                 lon: req.body.data.position.longitude,
                 precision: req.body.data.position.accuracy,
-                ssid: req.body.data.SSID,
+                SSID: req.body.data.SSID,
                 intensidad: req.body.data.RSSI,
             }
         )
@@ -157,15 +142,11 @@ app.post('/accel', function(req, res) {
                 lat: req.body.data.position.latitude,
                 lon: req.body.data.position.longitude,
                 precision: req.body.data.position.accuracy,
-                ssid: req.body.data.SSID,
+                SSID: req.body.data.SSID,
                 intensidad: req.body.data.RSSI,
             };
         });
     }
-
-    // fs.appendFile(`${macAddress.split(':').join('_')}.csv`, `${now},${req.body.data.analogRead}` + "\n", function (err) {
-    //     if (err) throw err;
-    // });
 });
 
 function isInWorkInterval(macAddress) {
@@ -233,7 +214,7 @@ function getBatteryLevel(analogRead) {
     return Number(level.toFixed(0));
 }
 
-setInterval(() => {
+const publishDevices = () => {
     devices = devices.map((device) => {
         if ((Date.now()) - device.ultimaTransmision > config.tiempoSinTransmisionComoSinMovimiento * 1000) {
             device.enMovimiento = false;
@@ -241,7 +222,12 @@ setInterval(() => {
 
         device.tiempoQuieto = device.enMovimiento
             ? 0
-            : (device.tiempoQuieto + publishInterval / 1000);
+            : (device.tiempoQuieto + config.pushTime / 1000);
+
+        device.high = config.sensors[0].high;
+        device.highest = config.sensors[0].highest;
+        device.low = config.sensors[0].low;
+        device.lowest = config.sensors[0].lowest;
 
         return device;
     });
@@ -251,27 +237,43 @@ setInterval(() => {
     /**
      * Publish to AWS IoT
      */
-    // const device = deviceModule({
-    //     /*keyPath: args.privateKey,
-    //     certPath: args.clientCert,
-    //     caPath: args.caCert,*/
-    //     keyPath: './ORT-MIL-SERVER.private.key',
-    //     certPath: './ORT-MIL-SERVER.cert.pem',
-    //     caPath: './root-CA.crt',
-    //     // clientId: args.clientId,
-    //     // region: args.region,
-    //     // baseReconnectTimeMs: args.baseReconnectTimeMs,
-    //     // keepalive: args.keepAlive,
-    //     // protocol: args.Protocol,
-    //     // port: args.Port,
-    //     // host: args.Host,
-    //     host: 'a1cq7pfnlzpa82.iot.us-east-1.amazonaws.com',
-    //     // debug: args.Debug
-    // });
+    awsIot.publishDevices(devices);
+};
 
-    // device.subscribe('ORT-MIL-SERVER');
-    // devices.forEach(iotDevice => {
-    //     device.publish('ORT-MIL-SERVER', JSON.stringify(iotDevice));
-    // });
+let publishTimer = null;
 
-}, config.periodoPublicacion || 1000);
+reconfigureTimer = new Timer(() => {
+    const url = 'http://iotdev.expertaart.com.ar:8080/iot/raspy/getConfiguration/a4:b3:f0:23:45/879F22B9FBC5E50068212B54EC9F84C7C1C7F2295EDD70B24BF8C4706580B535';
+    
+    const responseJson = {
+        pushTime: 5,
+        reconfigureTime: 3600,
+        sensors: [
+            {
+                delta: 0,
+                high: 100,
+                highest: 200,
+                low: 0,
+                lowest: 0,
+                metric: "Segundos",
+                nroSensor: 1,
+                readTime: 5
+            }
+        ],
+        serial: "a4:b3:f0:23:45"
+    };
+
+    config.sensors = responseJson.sensors;
+
+    config.pushTime = responseJson.pushTime * 1000;
+    if (publishTimer) {
+        publishTimer.reset(config.pushTime);
+    } else {
+        publishTimer = new Timer(publishDevices, config.pushTime);
+    }
+    
+    config.reconfigureTime = responseJson.reconfigureTime * 1000;
+
+    reconfigureTimer.reset(config.reconfigureTime);
+
+}, config.reconfigureTime);
