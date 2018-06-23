@@ -1,109 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
+    <head>
+        <meta charset="utf-8" />
+        <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
+        <link rel="icon" type="image/png" href="../assets/img/favicon.png">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+        <title>
+            Monitor Hombre Quieto
+        </title>
+        <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
+        <!--         Fonts and icons         -->
+        <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:400,700|Material+Icons" />
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
+        <!-- CSS Files -->
+        <link href="../assets/css/material-dashboard.css?v=2.1.0" rel="stylesheet" />
+    </head>
 
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-	</head>
-	<body>
-		<div class="container-fluid">
-			<div class="row">
-				<table class="table table-striped table-hover table-sm table-bordered">
-					<thead>
-						<tr>
-							<th>Mac Address</th>
-							<th>Alias</th>
-							<th>Ult. comunicación</th>
-							<th>SSID</th>
-							<th>RSSI</th>
-							<th>Ubicación</th>
-							<th>Precisión</th>
-							<th>En movimiento</th>
-							<th>Tiempo sin movimiento</th>
-							<th>Estado Batería</th>
-						</tr>
-					</thead>
+    <body class="">
+        <div class="wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header card-header-primary">
+                                <h4 class="card-title ">Dispositivos (<span id="cantDispositivos">0</span>)</h4>
+                                <p class="card-category">Listado de dispositivos y sus estados</p>
+                            </div>
 
-					<tbody></tbody>
-				</table>
-			</div>
-		</div>
-	</body>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead class=" text-primary">
+                                            <th>
+                                                Mac Address
+                                            </th>
+                                            <th>
+                                                Alias
+                                            </th>
+                                            <th>
+                                                Ult. comunicación
+                                            </th>
+                                            <th>
+                                                SSID
+                                            </th>
+                                            <th>
+                                                RSSI
+                                            </th>
+                                            <th>
+                                                Ubicación
+                                            </th>
+                                            <th>
+                                                Precisión
+                                            </th>
+                                            <th>
+                                                En movimiento
+                                            </th>
+                                            <th>
+                                                Tiempo sin movimiento
+                                            </th>
+                                            <th>
+                                                Estado Batería
+                                            </th>
+                                        </thead>
 
-	<script src="/socket.io/socket.io.js"></script>
-	<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-	
-	<script type="text/javascript">
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-		var socket = io.connect();
-		var tbody = $('tbody');
+        <!--     Core JS Files     -->
+        <script src="../assets/js/core/jquery.min.js" type="text/javascript"></script>
+        <script src="../assets/js/core/popper.min.js" type="text/javascript"></script>
+        <script src="../assets/js/core/bootstrap-material-design.min.js" type="text/javascript"></script>
+        <script src="../assets/js/plugins/perfect-scrollbar.jquery.min.js"></script>
+        <!-- Chartist JS -->
+        <script src="../assets/js/plugins/chartist.min.js"></script>
 
-		socket.on('accelData', function(accelData) {
-			tbody.empty();
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+                integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 
-			accelData.forEach((deviceData) => {
-				var macAddress = deviceData.serial.split(':').join('_')
-				var deviceRow = $('tr#' + macAddress)
+        <script type="text/javascript">
+            var socket = io.connect();
+            var tbody = $('tbody');
 
-				newRow(macAddress);
-				updateRow($('tr#' + macAddress), deviceData);
-			});
-		});
+            socket.on('accelData', function(accelData) {
+                tbody.empty();
 
-		function updateRow(deviceRow, data) {
-			deviceRow.children(".alias").text(data.alias);
+                accelData.forEach((deviceData) => {
+                    var macAddress = deviceData.serial.split(':').join('_')
+                    var deviceRow = $('tr#' + macAddress)
 
-			lastComunication = new Date(data.readTime);
+                    newRow(macAddress);
+                    updateRow($('tr#' + macAddress), deviceData);
+                });
 
-			/**
-			 * timezone correction
-			 */
-			lastComunication.setHours(lastComunication.getHours());
+                $('#cantDispositivos').text(accelData.length);
+            });
 
-			deviceRow.children(".last-comunication").text(
-				`${('0'+lastComunication.getDate()).substr(-2)}-${('0'+(lastComunication.getMonth()+1)).substr(-2)}-${lastComunication.getFullYear()}`
-				+ ` ${lastComunication.getHours()}:${('0'+lastComunication.getMinutes()).substr(-2)}:${('0'+lastComunication.getSeconds()).substr(-2)}`
-			);
+            function updateRow(deviceRow, data) {
+                deviceRow.children(".alias").text(data.alias);
 
-			deviceRow.children(".SSID").text(data.ssid);
-			deviceRow.children(".RSSI").text(data.intensidad);
+                lastComunication = new Date(data.readTime);
 
-			const mapsLink = document.createElement('a');
-			mapsLink.appendChild(document.createTextNode('Maps'));
-			mapsLink.title = 'Maps';
-			mapsLink.target = '_blank';
-			mapsLink.href = 'https://www.google.com/maps/@'+data.lat+','+data.lon+',16z'
+                /**
+                 * timezone correction
+                 */
+                lastComunication.setHours(lastComunication.getHours());
 
-			deviceRow.children(".location").html(mapsLink);
-			deviceRow.children(".accuracy").text(data.precision);
+                deviceRow.children(".last-comunication").text(
+                    `${('0'+lastComunication.getDate()).substr(-2)}-${('0'+(lastComunication.getMonth()+1)).substr(-2)}-${lastComunication.getFullYear()}`
+                    + ` ${lastComunication.getHours()}:${('0'+lastComunication.getMinutes()).substr(-2)}:${('0'+lastComunication.getSeconds()).substr(-2)}`
+                );
 
-			if (data.enMovimiento) {
-				deviceRow.children(".in-movement").removeClass('bg-danger').addClass('bg-success');
-			} else {
-				deviceRow.children(".in-movement").removeClass('bg-success').addClass('bg-danger');
-			}
+                deviceRow.children(".SSID").text(data.SSID);
+                deviceRow.children(".RSSI").text(data.intensidad);
 
-			deviceRow.children(".seconds-no-movement").text(data.tiempoQuieto + ' segundos');
+                const mapsLink = document.createElement('a');
+                mapsLink.appendChild(document.createTextNode('Maps'));
+                mapsLink.title = 'Maps';
+                mapsLink.target = '_blank';
+                mapsLink.href = 'https://www.google.com/maps/@'+data.lat+','+data.lon+',16z'
 
-			deviceRow.children(".battery").text(data.bateria + ' %');
-		}
+                deviceRow.children(".location").html(mapsLink);
+                deviceRow.children(".accuracy").text(data.precision);
 
-		function newRow(macAddress) {
-			var newRow = '<tr id=' + macAddress + '>'
-					+ '<td>' + macAddress.split('_').join(':') + '</td>'
-					+ '<td class=\"alias\""></td>'
-					+ '<td class=\"last-comunication\"></td>'
-					+ '<td class=\"SSID\"></td>'
-					+ '<td class=\"RSSI\"></td>'
-					+ '<td class=\"location\"></td>'
-					+ '<td class=\"accuracy\"></td>'
-					+ '<td class=\"in-movement\"></td>'
-					+ '<td class=\"seconds-no-movement\"></td>'
-					+ '<td class=\"battery\">83%</td>'
-				+ '</tr\>';
+                if (data.enMovimiento) {
+                    deviceRow.find(".in-movement button").removeClass('btn-danger').addClass('btn-success');
+                    deviceRow.find(".in-movement button").html('Sí');
+                } else {
+                    deviceRow.find(".in-movement button").removeClass('btn-success').addClass('btn-danger');
+                    deviceRow.find(".in-movement button").html('No');
+                }
 
-			$('tbody').append(newRow);
-		}
+                deviceRow.children(".seconds-no-movement").text(data.tiempoQuieto + ' segundos');
 
-	</script>
+                if (data.cargarBateria) {
+                    deviceRow.find(".charge-battery button").removeClass('bg-success').addClass('bg-danger');
+                    deviceRow.find(".charge-battery button").html('Crítico');
+                } else {
+                    deviceRow.find(".charge-battery button").removeClass('bg-danger').addClass('bg-success');
+                    deviceRow.find(".charge-battery button").html('Correcto');
+                }
+            }
+
+            function newRow(macAddress) {
+                $('tbody').append(
+                    '<tr id=' + macAddress + '>'
+                        + '<td>' + macAddress.split('_').join(':') + '</td>'
+                        + '<td class="alias"></td>'
+                        + '<td class="last-comunication"></td>'
+                        + '<td class="SSID"></td>'
+                        + '<td class="RSSI"></td>'
+                        + '<td class="location"></td>'
+                        + '<td class="accuracy"></td>'
+                        + '<td class="in-movement">'
+                        +     '<button type="button" class="btn"></button>'
+                        + '</td>'
+                        + '<td class="seconds-no-movement"></td>'
+                        + '<td class="charge-battery">'
+                        +     '<button type="button" class="btn"></button>'
+                        + '</td>'
+                    + '</tr\>'
+                );
+            }
+
+        </script>
+    </body>
 </html>

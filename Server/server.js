@@ -5,13 +5,14 @@ const server = require('http').Server(app);
 const io = require('socket.io')(server);
 const path = require('path');
 const fs = require('fs');
-
 const http = require('http');
 
 const Timer = require('./libs/timer');
 
+const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+
 const awsIot = require('./libs/awsIot');
-awsIot.init();
+awsIot.init(config.aws.iot);
 
 const { createLogger, format, transports } = require('winston');
 const { combine, timestamp, label, printf } = format;
@@ -31,8 +32,6 @@ const logger = createLogger({
 if (process.env.NODE_ENV !== 'production') {
     logger.add(new transports.Console({}))
 }
-
-const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 
 app.use(bodyParser.json())
 
@@ -62,7 +61,13 @@ const devicesAccel = {};
 let devices = [];
 
 app.post('/accel', function(req, res) {
-    const macAddress = req.body.data.macAddress;
+    logger.log({
+        level: 'info',
+        message: 'received: ' + JSON.stringify(req.body.data)
+    });
+
+    // const macAddress = req.body.data.macAddress;
+    const macAddress = "a4:b3:f0:23:45-1"; // @todo Hardcodeada para las pruebas
 
     /**
      * Si el dispositivo no fue suscripto entonces se ignora.
@@ -76,7 +81,7 @@ app.post('/accel', function(req, res) {
     ) {
         return;
     }
-    
+
     const data = {
         accel: {
             x: req.body.data.accel.x,
@@ -94,9 +99,9 @@ app.post('/accel', function(req, res) {
         devicesAccel[macAddress].unshift(data);
         if (devicesAccel[macAddress].length > config.datosPorDispositivo) {
             devicesAccel[macAddress].pop();
-            req.body.data.isMoving = 
-                isMoving(devicesAccel[macAddress], 'x') 
-                || isMoving(devicesAccel[macAddress], 'y') 
+            req.body.data.isMoving =
+                isMoving(devicesAccel[macAddress], 'x')
+                || isMoving(devicesAccel[macAddress], 'y')
                 || isMoving(devicesAccel[macAddress], 'z');
         }
     } else {
@@ -112,13 +117,13 @@ app.post('/accel', function(req, res) {
 
     if (devices.length === 0 || !devices.some(d => d.serial === macAddress)) {
         devices.push(
-            { 
+            {
                 serial: macAddress,
                 alias: alias,
                 readTime: now,
                 enMovimiento: (req.body.data.isMoving) ? 1 : 0,
                 tiempoQuieto: 0,
-                bateria: getBatteryLevel(req.body.data.analogRead),
+                cargarBateria: req.body.data.analogRead < 2500,
                 lat: req.body.data.position.latitude,
                 lon: req.body.data.position.longitude,
                 precision: req.body.data.position.accuracy,
@@ -131,14 +136,14 @@ app.post('/accel', function(req, res) {
             if (device.serial !== macAddress) {
                 return device;
             }
-    
+
             return {
                 serial: device.serial,
                 alias: alias,
                 readTime: now,
                 enMovimiento: (req.body.data.isMoving) ? 1 : 0,
                 tiempoQuieto: device.tiempoQuieto,
-                bateria: getBatteryLevel(req.body.data.analogRead),
+                cargarBateria: req.body.data.analogRead < 2500,
                 lat: req.body.data.position.latitude,
                 lon: req.body.data.position.longitude,
                 precision: req.body.data.position.accuracy,
@@ -157,7 +162,7 @@ function isInWorkInterval(macAddress) {
     if (config.dispositivos[macAddress].cronograma.hasOwnProperty(weekday[currentTimeObject.getDay()])) {
         config.dispositivos[macAddress].cronograma[weekday[currentTimeObject.getDay()]].forEach((horas) => {
             const currentTime = [
-                addZeroPadding(currentTimeObject.getHours()), 
+                addZeroPadding(currentTimeObject.getHours()),
                 addZeroPadding(currentTimeObject.getMinutes())
             ].join('');
 
@@ -199,21 +204,6 @@ function isMoving(data, axis) {
     return ((accelMax - accelMin) > config.sensibilidadDeteccionMovimiento) ? 1 : 0;
 }
 
-function getBatteryLevel(analogRead) {
-    const max = 940
-        , min = 700;
-
-    let level = (analogRead - min) / (max - min) * 100;
-
-    if (level > 100) {
-        level = 100;
-    } else if (level < 0) {
-        level = 0;
-    }
-
-    return Number(level.toFixed(0));
-}
-
 const publishDevices = () => {
     devices = devices.map((device) => {
         if ((Date.now()) - device.ultimaTransmision > config.tiempoSinTransmisionComoSinMovimiento * 1000) {
@@ -224,12 +214,17 @@ const publishDevices = () => {
             ? 0
             : (device.tiempoQuieto + config.pushTime / 1000);
 
-        device.high = config.sensors[0].high;
+        device.high    = config.sensors[0].high;
         device.highest = config.sensors[0].highest;
-        device.low = config.sensors[0].low;
-        device.lowest = config.sensors[0].lowest;
+        device.low     = config.sensors[0].low;
+        device.lowest  = config.sensors[0].lowest;
 
         return device;
+    });
+
+    logger.log({
+        level: 'info',
+        message: 'transmitting: ' + JSON.stringify(devices)
     });
 
     io.emit('accelData', devices);
@@ -237,16 +232,18 @@ const publishDevices = () => {
     /**
      * Publish to AWS IoT
      */
-    awsIot.publishDevices(devices);
+    if (config.aws.iot.publish) {
+        awsIot.publishDevices(devices);
+    }
 };
 
 let publishTimer = null;
 
 reconfigureTimer = new Timer(() => {
     const url = 'http://iotdev.expertaart.com.ar:8080/iot/raspy/getConfiguration/a4:b3:f0:23:45/879F22B9FBC5E50068212B54EC9F84C7C1C7F2295EDD70B24BF8C4706580B535';
-    
+
     const responseJson = {
-        pushTime: 5,
+        pushTime: 1,
         reconfigureTime: 3600,
         sensors: [
             {
@@ -271,7 +268,7 @@ reconfigureTimer = new Timer(() => {
     } else {
         publishTimer = new Timer(publishDevices, config.pushTime);
     }
-    
+
     config.reconfigureTime = responseJson.reconfigureTime * 1000;
 
     reconfigureTimer.reset(config.reconfigureTime);

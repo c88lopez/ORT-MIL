@@ -1,27 +1,24 @@
 {
     "datosPorDispositivo": 2,
     "suscripcionDispositivos": false,
+    "tiempoSinTransmisionComoSinMovimiento": 5,
+    "pushTime": 1000,
+    "sensibilidadDeteccionMovimiento": 1000,
+    "reconfigureTime": 1000,
+    "iotCerts": "sidney",
     "dispositivos": {
         "60:01:94:1F:88:0B": {
             "alias": "Cris",
+            "calibracionBateria": {
+                "voltaje": 2500,
+            },
             "cronograma": {
-                "sabado": [
+                "martes": [
                     {
-                        "inicio": "15:00",
-                        "fin": "20:03"
+                        "inicio": "00:00",
+                        "fin": "23:59"
                     }
-                ]
-            }
-        },
-        "60:01:94:20:23:46": {
-            "alias": "NodeMCU del Turco",
-            "cronograma": {
-                "sabado": [
-                    {
-                        "inicio": "15:00",
-                        "fin": "19:55"
-                    }
-                ]
+                ],
             }
         }
     }
