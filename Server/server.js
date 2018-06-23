@@ -9,7 +9,7 @@ const http = require('http');
 
 const Timer = require('./libs/timer');
 
-const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+const config = require('./config');
 
 const awsIot = require('./libs/awsIot');
 awsIot.init(config.aws.iot);
