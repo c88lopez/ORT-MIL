@@ -1,6 +1,7 @@
 *.csv
 Device/config.ino
 Server/config.json
+Server/config.js
 
 Server/node_modules
 
