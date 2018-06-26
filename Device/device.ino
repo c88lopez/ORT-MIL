@@ -35,6 +35,8 @@ double accuracy   = 0.0;
 
 WiFiClient client;
 
+ADC_MODE(ADC_VCC);
+
 // Construimos el objeto JSON que luego se le agregarán los datos sensados.
 StaticJsonBuffer<400> jsonBuffer;
 JsonObject& object = jsonBuffer.createObject();
@@ -360,7 +362,7 @@ void getAnalogRead() {
 
     analogReadValue = 0;
     for ( ; i < 5 ; i++) {
-        analogReadValue += analogRead(A0);
+        analogReadValue += ESP.getVcc();
     }
 
     analogReadValue /=  i;
