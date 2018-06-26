@@ -25,11 +25,11 @@ module.exports = {
 
             // YYYYMMddhhmmss
             parsedDevice.readTime = lastComunication.getFullYear()
-            + ('0'+(lastComunication.getMonth()+1)).substr(-2)
-            + ('0'+lastComunication.getDate()).substr(-2)
-            + lastComunication.getHours()
-            + ('0'+lastComunication.getMinutes()).substr(-2)
-            + ('0'+lastComunication.getSeconds()).substr(-2);
+            + ('0' + (lastComunication.getMonth() + 1)).substr(-2)
+            + ('0' + lastComunication.getDate()).substr(-2)
+            + ('0' + lastComunication.getHours()).substr(-2)
+            + ('0' + lastComunication.getMinutes()).substr(-2)
+            + ('0' + lastComunication.getSeconds()).substr(-2);
 
             this.deviceModule.publish(this.topic, JSON.stringify(parsedDevice));
         });
