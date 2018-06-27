@@ -152,6 +152,8 @@ app.post('/accel', function(req, res) {
             };
         });
     }
+
+    res.status(200).end();
 });
 
 function isInWorkInterval(macAddress) {
