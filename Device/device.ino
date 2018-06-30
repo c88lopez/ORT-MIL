@@ -20,7 +20,7 @@ const int scl_pin = D2; // Definición del pin I2C SCL
 // bool led_state = false;
 
 // Variables de los datos sensados.
-int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ; 
+int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
 
 String currentMacAddress = WiFi.macAddress();
 String currentSSID       = WiFi.SSID();
@@ -145,7 +145,7 @@ uint8_t readRegMPU(uint8_t reg) {
     Wire.write(reg);                      // Enviamos el registro con el que se trabajará.
     Wire.endTransmission(false);          // Termina con la transmición pero deja abierto el I2C.
     Wire.requestFrom(MPU_ADDR, 1);        // Configura para recibir 1 byte del registro elegido arriba
-                      
+
     return Wire.read();                   // Leemos y retormamos el byte
 }
 
@@ -182,7 +182,7 @@ void checkMPU(int mpu_addr) {
         if (data == 64) {
             Serial.println("MPU6050 in SLEEP mode!");
         } else {
-            Serial.println("MPU6050 in ACTIVE mode!"); 
+            Serial.println("MPU6050 in ACTIVE mode!");
         }
     } else {
         Serial.println("ERROR: Verifique dispositivo - MPU6050 NO está dispoinible");
@@ -204,10 +204,10 @@ void initMPU() {
  * Configuración del bit de la gestión de alimentación
  */
 void setSleepOff() {
-    writeRegMPU(PWR_MGMT_1, 0); 
+    writeRegMPU(PWR_MGMT_1, 0);
 }
 
-/** 
+/**
  * setGyroScale
  * Configura la escala del giroscopio.
  *
@@ -258,11 +258,11 @@ void setAccelScale() {
  * 0x47 71 GYRO_ZOUT[15:8]
  * 0x48 72 GYRO_ZOUT[7:0]
  */
-void readRawMPU() {  
-    Wire.beginTransmission(MPU_ADDR);       // inicia comunicação com endereço do MPU6050
-    Wire.write(ACCEL_XOUT);                 // envia o registro com o qual se deseja trabalhar, começando com registro 0x3B (ACCEL_XOUT_H)
-    Wire.endTransmission(false);            // termina transmissão mas continua com I2C aberto (envia STOP e START)
-    Wire.requestFrom(MPU_ADDR, 14);         // configura para receber 14 bytes começando do registro escolhido acima (0x3B)
+void readRawMPU() {
+    Wire.beginTransmission(MPU_ADDR);       // Inicia comunicación con MPU6050
+    Wire.write(ACCEL_XOUT);                 // Enviamos el registro con el que trabajaremos
+    Wire.endTransmission(false);            // Termina la transmición dejando I2C aberto (envia STOP y START)
+    Wire.requestFrom(MPU_ADDR, 14);         // configura para recibir 14 bytes comenzando con el registro 0x3B
 
     GyX = Wire.read() << 8;                 // Leemos primero el byte más significativo
     GyX |= Wire.read();                     // y luego el menos significativo
@@ -279,7 +279,7 @@ void readRawMPU() {
     AcY = Wire.read() << 8;
     AcY |= Wire.read();
     AcZ = Wire.read() << 8;
-    AcZ |= Wire.read(); 
+    AcZ |= Wire.read();
 
     // led_state = !led_state;
     // digitalWrite(LED_BUILTIN, led_state); // Parpadea el LED en cada transmisión
@@ -376,7 +376,7 @@ void makePOST() {
     if (!client.connect(rpiHost, 3000)) {
         Serial.println("No se pudo conectar con el servidor!\n");
         twinkleRedLed(3);
-    } else { 
+    } else {
         Serial.println("Conectado al servidor");
 
         // HTTP POST request
@@ -398,7 +398,7 @@ void makePOST() {
  */
 void getGoogleGeolocation() {
     char bssid[6];
-    DynamicJsonBuffer jsonBuffer; 
+    DynamicJsonBuffer jsonBuffer;
 
     // WiFi.scanNetworks devolverá la cantidad de redes encontradas
     int n = WiFi.scanNetworks();
@@ -412,17 +412,17 @@ void getGoogleGeolocation() {
     jsonString +="\"wifiAccessPoints\": [\n";
     for (int j = 0; j < n; ++j) {
         jsonString +="{\n";
-        jsonString +="\"macAddress\" : \"";    
-        jsonString +=(WiFi.BSSIDstr(j));      // Campo Obligatorio -  La dirección MAC del nodo WiFi. Los separadores deben ser : (dos puntos).
-        jsonString +="\",\n";                  
-        jsonString +="\"signalStrength\": ";   
+        jsonString +="\"macAddress\" : \"";
+        jsonString +=(WiFi.BSSIDstr(j));      // Campo Obligatorio - La dirección MAC del nodo WiFi. Los separadores deben ser : (dos puntos).
+        jsonString +="\",\n";
+        jsonString +="\"signalStrength\": ";
         jsonString +=WiFi.RSSI(j);          // La potencia actual de la señal medida en dBm.
         jsonString +="\n";
 
         if (j < n-1) {
             jsonString +="},\n";
         } else {
-            jsonString +="}\n";  
+            jsonString +="}\n";
         }
     }
 
@@ -438,14 +438,14 @@ void getGoogleGeolocation() {
         client.println("Content-Type: application/json");
         client.println("User-Agent: Arduino/1.0");
         client.print("Content-Length: ");
-        client.println(jsonString.length());    
+        client.println(jsonString.length());
         client.println();
-        client.print(jsonString);  
+        client.print(jsonString);
 
         delay(500);
     }
 
-    //Leer y parsear el JSON de respuesta de Google Geolocation API 
+    //Leer y parsear el JSON de respuesta de Google Geolocation API
     while (client.available()) {
         String line = client.readStringUntil('\r');
 
@@ -475,7 +475,7 @@ void setup() {
     pinMode(greenPin, OUTPUT);
     pinMode(bluePin, OUTPUT);
     pinMode(LED_BUILTIN, false);
-    
+
     ledBlue(false);
     ledGreen(false);
     ledRed(false);
