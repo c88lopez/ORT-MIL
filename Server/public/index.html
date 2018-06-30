@@ -92,7 +92,6 @@
         <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/locale/ar.js"></script>
 
         <script type="text/javascript">
-            var now = moment();
             var socket = io.connect();
             var tbody = $('tbody');
 
@@ -172,12 +171,6 @@
                         + '<td class="seconds-no-movement"></td>'
                         + '<td class="charge-battery">'
                         +     '<button type="button" class="btn"></button>'
-                        + '</td>'
-                    + '</tr>'
-                    + '<tr>'
-                        + '<td>RSSI Graph</td>'
-                        + '<td colspan="9">'
-                        +     ''
                         + '</td>'
                     + '</tr>'
                 );
