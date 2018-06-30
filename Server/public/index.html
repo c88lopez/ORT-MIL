@@ -89,8 +89,6 @@
 
         <script src="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
 
-        <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/locale/ar.js"></script>
-
         <script type="text/javascript">
             var socket = io.connect();
             var tbody = $('tbody');
@@ -108,6 +106,8 @@
 
                 $('#cantDispositivos').text(accelData.length);
             });
+
+            var devicesGraphData = {};
 
             function updateRow(deviceRow, data) {
                 deviceRow.children(".alias").text(data.alias);
@@ -153,6 +153,44 @@
                     deviceRow.find(".charge-battery button").removeClass('bg-danger').addClass('bg-success');
                     deviceRow.find(".charge-battery button").html('Correcto');
                 }
+
+                var seriesLength = 20;
+                if (devicesGraphData.hasOwnProperty(deviceRow[0].id)) {
+                    devicesGraphData[deviceRow[0].id].rssi.push(data.intensidad);
+                    devicesGraphData[deviceRow[0].id].tiempoQuieto.push(data.tiempoQuieto);
+
+                    if (devicesGraphData[deviceRow[0].id].rssi.length > seriesLength) {
+                        devicesGraphData[deviceRow[0].id].rssi.shift();
+                    }
+
+                    if (devicesGraphData[deviceRow[0].id].tiempoQuieto.length > seriesLength) {
+                        devicesGraphData[deviceRow[0].id].tiempoQuieto.shift();
+                    }
+                } else {
+                    devicesGraphData[deviceRow[0].id] = {};
+                    devicesGraphData[deviceRow[0].id].rssi = [data.intensidad];
+                    devicesGraphData[deviceRow[0].id].tiempoQuieto = [data.tiempoQuieto];
+                }
+
+                // Create a new line chart object where as first parameter we pass in a selector
+                // that is resolving to our chart container element. The Second parameter
+                // is the actual data object.
+                new Chartist.Line('.ct-chart-rssi', {
+                    // Our series array that contains series objects or in this case series data arrays
+                    series: [
+                        devicesGraphData[deviceRow[0].id].rssi
+                    ]
+                });
+
+                // Create a new line chart object where as first parameter we pass in a selector
+                // that is resolving to our chart container element. The Second parameter
+                // is the actual data object.
+                new Chartist.Line('.ct-chart-tiempoQuieto', {
+                    // Our series array that contains series objects or in this case series data arrays
+                    series: [
+                        devicesGraphData[deviceRow[0].id].tiempoQuieto
+                    ]
+                });
             }
 
             function newRow(macAddress) {
@@ -171,6 +209,18 @@
                         + '<td class="seconds-no-movement"></td>'
                         + '<td class="charge-battery">'
                         +     '<button type="button" class="btn"></button>'
+                        + '</td>'
+                    + '</tr>'
+                    + '<tr>'
+                        + '<td>RSSI Graph</td>'
+                        + '<td colspan="9">'
+                        +     '<div class="ct-chart-rssi"></div>'
+                        + '</td>'
+                    + '</tr>'
+                    + '<tr>'
+                        + '<td>Tiempo quieto</td>'
+                        + '<td colspan="9">'
+                        +     '<div class="ct-chart-tiempoQuieto"></div>'
                         + '</td>'
                     + '</tr>'
                 );
