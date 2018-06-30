@@ -109,6 +109,7 @@
 
             var devicesGraphData = {};
 
+            var seriesLength = 0;
             function updateRow(deviceRow, data) {
                 deviceRow.children(".alias").text(data.alias);
 
@@ -153,24 +154,43 @@
                     deviceRow.find(".charge-battery button").removeClass('bg-danger').addClass('bg-success');
                     deviceRow.find(".charge-battery button").html('Correcto');
                 }
-
-                var seriesLength = 20;
+                var seriesMaxLength = 5;
                 if (devicesGraphData.hasOwnProperty(deviceRow[0].id)) {
                     devicesGraphData[deviceRow[0].id].rssi.push(data.intensidad);
-                    devicesGraphData[deviceRow[0].id].tiempoQuieto.push(data.tiempoQuieto);
 
-                    if (devicesGraphData[deviceRow[0].id].rssi.length > seriesLength) {
-                        devicesGraphData[deviceRow[0].id].rssi.shift();
+                    if (data.tiempoQuieto < 120) {
+                        devicesGraphData[deviceRow[0].id].tiempoQuieto.success.push(data.tiempoQuieto);
+                        devicesGraphData[deviceRow[0].id].tiempoQuieto.warning.push(null);
+                        devicesGraphData[deviceRow[0].id].tiempoQuieto.error.push(null);
+                    } else if (data.tiempoQuieto < 300) {
+                        devicesGraphData[deviceRow[0].id].tiempoQuieto.warning.push(data.tiempoQuieto);
+                        devicesGraphData[deviceRow[0].id].tiempoQuieto.success.push(null);
+                        devicesGraphData[deviceRow[0].id].tiempoQuieto.error.push(null);
+                    } else {
+                        devicesGraphData[deviceRow[0].id].tiempoQuieto.error.push(data.tiempoQuieto);
+                        devicesGraphData[deviceRow[0].id].tiempoQuieto.warning.push(null);
+                        devicesGraphData[deviceRow[0].id].tiempoQuieto.success.push(null);
                     }
 
-                    if (devicesGraphData[deviceRow[0].id].tiempoQuieto.length > seriesLength) {
-                        devicesGraphData[deviceRow[0].id].tiempoQuieto.shift();
+                    if (seriesLength >= seriesMaxLength) {
+                        console.log('borrando');
+                        devicesGraphData[deviceRow[0].id].rssi.shift();
+
+                        devicesGraphData[deviceRow[0].id].tiempoQuieto.error.shift();
+                        devicesGraphData[deviceRow[0].id].tiempoQuieto.success.shift();
+                        devicesGraphData[deviceRow[0].id].tiempoQuieto.warning.shift();
                     }
                 } else {
                     devicesGraphData[deviceRow[0].id] = {};
                     devicesGraphData[deviceRow[0].id].rssi = [data.intensidad];
-                    devicesGraphData[deviceRow[0].id].tiempoQuieto = [data.tiempoQuieto];
+                    devicesGraphData[deviceRow[0].id].tiempoQuieto = {
+                        success: [(data.tiempoQuieto < 120 ? data.tiempoQuieto : null)],
+                        warning: [(data.tiempoQuieto >= 120 && data.tiempoQuieto < 300 ? data.tiempoQuieto : null)],
+                        error: [(data.tiempoQuieto >= 300 ? data.tiempoQuieto : null)],
+                    };
                 }
+
+                seriesLength++;
 
                 // Create a new line chart object where as first parameter we pass in a selector
                 // that is resolving to our chart container element. The Second parameter
@@ -188,7 +208,9 @@
                 new Chartist.Line('.ct-chart-tiempoQuieto', {
                     // Our series array that contains series objects or in this case series data arrays
                     series: [
-                        devicesGraphData[deviceRow[0].id].tiempoQuieto
+                        devicesGraphData[deviceRow[0].id].tiempoQuieto.success,
+                        devicesGraphData[deviceRow[0].id].tiempoQuieto.warning,
+                        devicesGraphData[deviceRow[0].id].tiempoQuieto.error,
                     ]
                 });
             }
